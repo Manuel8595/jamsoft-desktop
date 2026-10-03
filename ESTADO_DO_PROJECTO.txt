@@ -1,0 +1,102 @@
+ESTADO DO JAM SOFT — 01/10/2026
+
+PACOTE PREPARADO PARA USO LOCAL
+
+O pacote foi preparado para abrir a aplicacao no computador, sem sincronizar
+com o Supabase. Extraia a pasta farmacia-app e abra INICIAR_FARMACIA.bat. Nao
+precisa de abrir o VS Code.
+
+A janela da aplicacao nao foi iniciada durante esta verificacao. O primeiro
+arranque requer Python 3.12 e Internet para instalar as dependencias, como
+explicado em LEIA-ME.txt.
+
+O QUE FOI CORRIGIDO E VERIFICADO
+
+- A venda verifica o stock dos lotes validos antes de baixar o stock.
+- Lotes expirados nao podem ser vendidos; a escolha segue FEFO (vence primeiro,
+  sai primeiro).
+- Quando uma venda usa varios lotes, fica guardada a quantidade retirada de
+  cada lote.
+- O fecho do caixa calcula e guarda o total TPA e a diferenca entre o valor
+  esperado e os taloes contados.
+- Pagamentos mistos guardam separadamente a parte em dinheiro, Multicaixa ou
+  transferencia; esses valores entram nos totais do turno e do caixa.
+- A instalacao e a migracao criam as tabelas de fila/log de sincronizacao,
+  configuracao global, farmacias, terminais e transferencias IBT.
+- Os movimentos de caixa incluem os campos de autorizacao e numero do documento.
+- Uma instalacao nova cria os campos de sincronizacao necessarios em
+  itens_venda; a migracao tambem os acrescenta a bases antigas.
+- Uma linha sem classificação de IVA explícita passa a ser tributável por
+  defeito, para evitar uma isenção acidental.
+- Uma isenção marcada explicitamente continua a calcular IVA zero.
+- O módulo fiscal já não se apresenta como "Facturas AGT" e mostra que a
+  integração oficial ainda não está confirmada. Os novos PDFs de factura
+  identificam-se como documentos locais não validados pela AGT. A maquete PDF
+  também distingue a proposta do estado realmente verificado.
+- Passaram 9 verificacoes isoladas de venda e IVA: stock suficiente,
+  stock insuficiente com rollback, FEFO e venda multi-lote, lote expirado,
+  todos expirados, stock agregado, produto repetido, IVA tributável por defeito
+  e isenção explícita, e falha tardia com rollback.
+- A migração de uma base antiga e uma venda depois da migração passaram.
+- Foram repetidos os 6 cenarios de venda pedidos: stock suficiente,
+  insuficiente com rollback, FEFO, lote expirado, todos expirados e multi-lote.
+- Passou uma verificacao integrada de pagamento em dinheiro, Multicaixa e
+  misto, incluindo a comparacao de totais e o fecho do caixa.
+- As migracoes passaram em copias das 32 bases de dados incluidas, sem alterar
+  contagens de vendas, itens, produtos, lotes, caixas ou movimentos.
+- Das 7 vendas antigas com pagamento misto, 3 tinham uma factura ligada com
+  valores cuja soma confere; esses valores sao recuperados. As outras 4 ficam
+  sem divisao inventada.
+- O teste da aplicação sem nuvem bloqueou as chamadas HTTP: 0 pedidos enviados.
+- A sintaxe dos 143 ficheiros Python foi verificada.
+- A sincronizacao automatica, a sincronizacao manual, os acessos da plataforma
+  online e os diagnosticos Supabase estao desligados neste pacote.
+- As credenciais de ligacao ao Supabase foram retiradas deste ZIP. O ZIP
+  original do utilizador foi preservado.
+
+IVA E FACTURACAO
+
+No cadastro, deixe desmarcada a opcao de isencao para cosmeticos e outros
+produtos tributaveis. Assinale-a apenas para medicamentos que se enquadrem na
+isenção legal, destinados exclusivamente a fins terapeuticos ou profilacticos.
+O cadastro novo comeca tributavel. A taxa geral actualmente configurada na
+aplicacao e 14% para Luanda.
+
+Isto nao confirma certificacao nem validacao do software pela AGT. A aplicacao
+nao foi ligada ao sistema oficial de facturacao electronica da AGT e nao foi
+confirmado um numero de validacao do software. Antes de usar as facturas da
+aplicacao como facturas fiscais oficiais, confirme com a AGT ou contabilista
+os requisitos aplicaveis ao teu caso.
+
+BASE DE DADOS ANTIGA
+
+A base SQLite abre e passou a verificacao de integridade. Contudo, 91 das 115
+vendas antigas nao possuem linhas de produtos em itens_venda. Os backups
+incluidos tambem nao contem essas linhas, e nenhuma factura com linhas de
+produtos esta ligada a essas 91 vendas. Por isso nao foi possivel reconstruir
+os detalhes sem inventar dados. Os registos antigos foram preservados.
+
+SUPABASE ONLINE
+
+Antes desta actualizacao, o projecto aceitou consultas publicas limitadas a
+identificadores em varias tabelas. Este ZIP impede que esta aplicacao volte a
+consultar o Supabase e nao leva as credenciais antigas. Isso nao altera as
+permissoes que ja estao guardadas no servidor.
+
+Para bloquear o acesso da API publica no servidor, segue as instrucoes em
+COMO_PROTEGER_SUPABASE.txt e executa SUPABASE_BLOQUEIO_TEMPORARIO.sql no painel
+Supabase. A consulta nao apaga dados, mas desliga o acesso API publico ate
+serem criadas regras seguras. Mantem a sincronizacao desligada depois disso;
+serao necessarias regras de acesso especificas antes de a voltar a activar.
+
+FONTES OFICIAIS
+
+IVA / AGT:
+https://portaldocontribuinte.minfin.gov.ao/impostos-e-taxas/imposto-sobre-valor-acrescentado
+
+Registo e requisitos tecnicos de facturacao electronica:
+https://portaldoparceiro.minfin.gov.ao/doc-agt/faturacao-electronica/1/servicos/registar.html
+
+RLS e chaves de API Supabase:
+https://supabase.com/docs/guides/database/postgres/row-level-security
+https://supabase.com/docs/guides/getting-started/api-keys

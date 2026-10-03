@@ -1,0 +1,20 @@
+JAM SOFT — COMO INICIAR
+
+1. Extraia a pasta farmacia-app do ZIP para uma pasta nova e vazia. Nao a
+   misture com uma copia antiga: um ficheiro .env antigo pode conservar
+   definicoes de ligacao a nuvem.
+2. Abra essa pasta e faça duplo clique em INICIAR_FARMACIA.bat.
+3. Na primeira utilização, o computador precisa de Internet para preparar os componentes. Aguarde até a janela da aplicação abrir.
+4. Nas próximas vezes, faça duplo clique no mesmo ficheiro. Não precisa de abrir o VS Code.
+
+O ficheiro farmacia.db, as facturas e os backups foram mantidos. O ZIP original não foi alterado.
+
+A aplicação local está pronta para utilização sem sincronização com a nuvem. A sincronização e a plataforma online estão desligadas por segurança até as permissões do Supabase serem corrigidas. Não altere CLOUD_ACCESS_ENABLED nem SYNC_ENABLED para "true" antes de concluir essa correcção.
+
+Consulte COMO_PROTEGER_SUPABASE.txt para as instruções sobre a protecção da base de dados online. A aplicação local continua a funcionar enquanto esse passo não for feito.
+
+Consulte ESTADO_DO_PROJECTO.txt para ver o que foi corrigido, testado e quais os passos externos ainda necessários para a nuvem e a facturação oficial.
+
+Este pacote não inclui as credenciais do Supabase. A sincronização está desligada, por isso não precisas de configurar esse serviço para usar a aplicação local.
+
+Se aparecer um erro ao iniciar, tire uma fotografia da janela e peça ajuda antes de apagar ou substituir ficheiros.

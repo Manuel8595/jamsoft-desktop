@@ -1,0 +1,8 @@
+bcrypt==5.0.0
+matplotlib==3.11.2
+ollama==0.6.2
+pyserial==3.5
+pywin32==312
+reportlab==5.0.1
+requests==2.34.2
+streamlit==1.64.0

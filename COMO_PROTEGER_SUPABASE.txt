@@ -1,0 +1,29 @@
+PROTEGER A BASE DE DADOS ONLINE
+
+O programa da farmacia continua a funcionar no computador. A ligacao a nuvem
+foi desligada neste pacote porque o projecto online aceitou leituras publicas
+com a chave de aplicacao. Desligar a nuvem no computador nao fecha, por si so,
+o acesso que ja existe no servidor.
+
+Para bloquear esse acesso:
+
+1. Entre no painel oficial do Supabase e abra o projecto desta farmacia.
+2. Abra "SQL Editor" e crie uma consulta nova.
+3. Abra o ficheiro SUPABASE_BLOQUEIO_TEMPORARIO.sql desta pasta.
+4. Copie o conteudo completo, cole na consulta e carregue em "Run".
+5. Se aparecer um erro, pare e envie uma fotografia da mensagem antes de
+   tentar novamente.
+
+Este procedimento nao apaga vendas, produtos nem outros registos. Bloqueia o
+acesso da API publica as tabelas do esquema public e desactiva as permissoes
+publicas de funcoes e sequencias. A plataforma online e a sincronizacao deixam
+de funcionar ate serem criadas e testadas regras de acesso adequadas. O painel
+administrativo do Supabase continua a ser o local para gerir os dados.
+
+Depois de executar a consulta, nao ligue CLOUD_ACCESS_ENABLED nem SYNC_ENABLED
+no ficheiro .env. Primeiro e necessario configurar regras que permitam apenas
+o acesso autorizado a esta farmacia e testar que outra pessoa nao consegue
+ver os dados.
+
+Se nao quiser fazer este passo agora, mantenha a aplicacao local desligada da
+nuvem. Os dados que ja estavam no Supabase continuam no servidor.

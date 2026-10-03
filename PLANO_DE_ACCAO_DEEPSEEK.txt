@@ -1,0 +1,97 @@
+PLANO DE ACCAO PARA O DEEPSEEK — JAM SOFT
+Actualizado em 01/10/2026
+
+OBJECTIVO
+Concluir apenas os pontos que ficaram dependentes de acesso ao painel Supabase,
+de confirmacao oficial da AGT ou de documentos historicos que ainda nao foram
+fornecidos. O pacote local ja contem as correccoes listadas em
+ESTADO_DO_PROJECTO.txt. Preservar o ZIP original e trabalhar numa copia.
+
+FASE LOCAL JA CONCLUIDA
+- O primeiro caracter de seguranca.py foi limpo. A forma antiga "0#" era aceite
+  pelo Python como um zero seguido de comentario; nao era a causa de uma falha
+  de arranque.
+- O fecho de caixa tem campos e calculos de TPA. Pagamentos mistos registam a
+  divisao real entre dinheiro e o segundo meio de pagamento.
+- Foram acrescentadas as tabelas de sincronizacao, identidade local e IBT, e os
+  campos em falta nos movimentos de caixa.
+- As migracoes foram verificadas em copias de todas as 32 bases de dados. Os
+  testes de stock/FEFO e do fecho com pagamento misto passaram.
+- Nao pedir ao proprietario que escolha entre script automatico e codigo para
+  colar: as alteracoes locais ja estao no ZIP preparado. Nao voltar a aplicar
+  estas correccoes por cima do ZIP.
+
+1. SUPABASE — ACESSO E SINCRONIZACAO
+
+O painel ainda nao foi acedido: a tentativa por email/palavra-passe mostrou
+"Invalid login credentials" e a opcao "Continue with ChatGPT" abriu a pagina de
+autenticacao da OpenAI. O proprietario da conta tem de concluir pessoalmente o
+login. Nunca pedir, guardar, copiar ou imprimir palavra-passe, codigo de acesso,
+chave API ou token.
+
+Depois do proprietario entrar:
+- Confirmar que o projecto aberto e o mesmo projecto indicado pela configuracao
+  local, sem mostrar chaves ou outros segredos.
+- Inspeccionar as tabelas, grants, politicas RLS e funcoes publicas existentes.
+- Rever SUPABASE_BLOQUEIO_TEMPORARIO.sql antes de executar. O objectivo e impedir
+  leitura/escrita publica dos dados da farmacia, sem apagar registos. Explicar ao
+  proprietario que o acesso API online ficara indisponivel ate haver politicas
+  correctas.
+- Aplicar o bloqueio apenas no projecto confirmado e verificar com a chave
+  publica que anonimos nao leem nem alteram dados da farmacia. Nunca colocar uma
+  chave service_role na aplicacao local, no browser, no ZIP ou em mensagens.
+- Manter CLOUD_ACCESS_ENABLED e SYNC_ENABLED desligados ate desenhar e testar
+  politicas de menor privilegio por tabela e farmacia/conta, autenticar os
+  utilizadores correctamente e testar leitura, escrita, repeticao e conflitos de
+  sincronizacao. Nao reactivar a sincronizacao so para a fazer funcionar.
+- Registar o resultado sem incluir valores de chaves, tokens, emails ou outros
+  dados pessoais.
+
+2. IVA E FACTURACAO ELECTRONICA — AGT
+
+- Confirmar nas fontes oficiais actuais da AGT e com contabilista/AGT quais os
+  produtos farmaceuticos isentos, incluindo o criterio de uso exclusivamente
+  terapeutico/profilactico, e quais os cosmeticos tributaveis.
+- Confirmar a taxa aplicavel a esta farmacia e ao seu regime/localizacao antes de
+  alterar a taxa. A aplicacao esta configurada para a taxa geral de Luanda; nao
+  assumir que esta regra serve para outra provincia ou regime.
+- Verificar se a farmacia esta obrigada a usar facturacao electronica AGT e
+  quais os requisitos de validacao/certificacao do software, numero de validacao,
+  assinatura JWS e servico oficial de registo de facturas.
+- Implementar integracao oficial somente com especificacao vigente, credenciais
+  fornecidas de forma segura pelo proprietario e ambiente de testes aprovado.
+  Nao inventar numero de validacao, assinatura, resposta do servico ou dados da
+  empresa. Nao declarar o JAM Soft certificado/conforme sem confirmacao oficial.
+- Nao alterar em massa a classificacao fiscal de produtos ou facturas existentes
+  sem validacao do proprietario e fundamento documental.
+
+3. VENDAS HISTORICAS SEM LINHAS
+
+Na base actual, 91 de 115 vendas antigas nao possuem linhas de produtos em
+itens_venda. Nenhuma factura interna com linhas de produtos esta ligada a essas
+91 vendas, e os 31 backups incluidos tambem nao continham essas linhas.
+- Pedir ao proprietario facturas em papel, exportacoes ou outra fonte verificavel
+  antes de qualquer reconstrucao.
+- Fazer copia de seguranca antes de uma eventual recuperacao e manter auditoria
+  da origem de cada linha restaurada.
+- Se nao houver prova documental, preservar os totais e registos existentes,
+  marcar a limitacao e nao inventar produtos, lotes, quantidades ou movimentos de
+  stock.
+- Das 7 vendas antigas com pagamento misto, 3 facturas ligadas guardavam uma
+  divisao que confere com o total e foram recuperadas na migracao local. As
+  outras 4 continuam sem divisao porque nao ha valores comprovativos.
+
+4. ENTREGA E VALIDACAO
+
+- Nao mexer na autenticacao local, IA ou arquitectura geral sem necessidade
+  demonstrada.
+- Executar os testes de venda e migracao indicados no estado do projecto e
+  acrescentar verificacoes especificas do Supabase/AGT apenas em ambiente seguro.
+- O programa nao foi aberto numa janela grafica para um teste manual completo.
+  Depois de descarregar e extrair o ZIP, confirmar localmente a abertura do dia,
+  abertura do turno, venda em dinheiro, venda Multicaixa, pagamento misto, fecho
+  do turno/caixa e relatorio Z. Se algum valor divergir, guardar uma fotografia
+  do resumo, sem incluir senhas ou chaves.
+- Produzir um unico ZIP actualizado, sem .env, chaves, caches ou bases de teste.
+- Preservar o ZIP original e entregar um resumo simples do que foi feito, do que
+  foi confirmado por fontes oficiais e do que continua pendente.
