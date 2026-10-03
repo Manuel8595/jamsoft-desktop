@@ -1,95 +1,151 @@
+"""
+Ecrã de login — JAM Soft
+Cores alinhadas com o logotipo (roxo + dourado).
+Modo fullscreen com card centralizado.
+"""
 from tkinter import *
 from tkinter import messagebox
+from pathlib import Path
+
+from PIL import Image, ImageTk
+
 from database import (autenticar, registar_auditoria,
                        esta_bloqueado, tentativas_restantes,
                        tempo_restante_bloqueio)
 
-COR_FUNDO = "#f0fdf4"
-COR_PRIMARIA = "#16a34a"
-COR_TEXTO = "#14532d"
-COR_CARD = "#ffffff"
-COR_PERIGO = "#dc2626"
-COR_ALERTA = "#f97316"
 
-# Variavel global que guarda o utilizador autenticado
+# ============================================================
+# CORES — alinhadas com o logotipo JAM Soft
+# ============================================================
+COR_PRIMARIA = "#7c3aed"      # Roxo (JAM)
+COR_DOURADO = "#fbbf24"        # Dourado (Soft)
+COR_ESCURA = "#0f172a"         # Azul escuro (contraste)
+COR_FUNDO = "#0f172a"          # Fundo escuro
+COR_CARD = "#1e293b"           # Card escuro
+COR_TEXTO = "#f8fafc"          # Texto claro
+COR_TEXTO_SEC = "#94a3b8"      # Texto secundário
+COR_PERIGO = "#ef4444"         # Vermelho
+COR_ALERTA = "#f97316"         # Laranja
+COR_SUCESSO = "#10b981"        # Verde
+
+
+# Variável global que guarda o utilizador autenticado
 utilizador_logado = None
 
 
 def abrir_login():
-    """Abre a tela de login. Retorna True se autenticou, False se cancelou."""
+    """Abre a tela de login em fullscreen. Retorna True se autenticou."""
     global utilizador_logado
-    
+
     janela = Tk()
     janela.title("JAM Soft — Login")
-    janela.geometry("450x550")
     janela.configure(bg=COR_FUNDO)
-    janela.resizable(False, False)
-    
-    # Centraliza a janela
-    janela.update_idletasks()
-    x = (janela.winfo_screenwidth() - 450) // 2
-    y = (janela.winfo_screenheight() - 550) // 2
-    janela.geometry(f"450x550+{x}+{y}")
-    
-    # Cabecalho
-    header = Frame(janela, bg=COR_PRIMARIA, height=140)
-    header.pack(fill=X)
-    header.pack_propagate(False)
-    
-    Label(header, text="💊", font=("Arial", 40), bg=COR_PRIMARIA, fg="white").pack(pady=(20, 0))
-    Label(header, text="JAM Soft", font=("Arial", 22, "bold"),
-          bg=COR_PRIMARIA, fg="white").pack()
-    Label(header, text="Sistema de Farmacia", font=("Arial", 11, "italic"),
-          bg=COR_PRIMARIA, fg="#dcfce7").pack()
-    
-    # Corpo
-    corpo = Frame(janela, bg=COR_FUNDO)
-    corpo.pack(pady=30, padx=40, fill=X)
-    
-    Label(corpo, text="Iniciar Sessao", font=("Arial", 16, "bold"),
-          bg=COR_FUNDO, fg=COR_TEXTO).pack(pady=(0, 20))
-    
-    Label(corpo, text="Nome de utilizador:", font=("Arial", 11, "bold"),
-          bg=COR_FUNDO, fg=COR_TEXTO).pack(anchor=W, pady=(0, 5))
-    
-    entry_user = Entry(corpo, font=("Arial", 13), bd=1, relief=SOLID)
-    entry_user.pack(fill=X, pady=(0, 15), ipady=8)
+
+    # Fullscreen
+    janela.state("zoomed")
+
+    # Ícone da janela
+    try:
+        _caminho_ico = Path(__file__).parent / "logos" / "jamsoft.ico"
+        if _caminho_ico.exists():
+            janela.iconbitmap(default=str(_caminho_ico))
+    except Exception:
+        pass
+
+    # ─── Container centralizado no meio do ecrã ───
+    container = Frame(janela, bg=COR_FUNDO)
+    container.place(relx=0.5, rely=0.5, anchor=CENTER)
+
+    # ─── Card principal ───
+    card = Frame(container, bg=COR_FUNDO, padx=60, pady=40)
+    card.pack()
+
+    # ─── Logo ───
+    try:
+        caminho_logo = Path(__file__).parent / "logos" / "logo_app.png"
+        if not caminho_logo.exists():
+            caminho_logo = Path(__file__).parent / "logos" / "icon_192.png"
+
+        if caminho_logo.exists():
+            img_pil = Image.open(caminho_logo).convert("RGBA")
+            img_pil = img_pil.resize((160, 160), Image.LANCZOS)
+            _logo_img = ImageTk.PhotoImage(img_pil)
+
+            lbl_logo = Label(card, image=_logo_img, bg=COR_FUNDO)
+            lbl_logo.image = _logo_img
+            lbl_logo.pack(pady=(0, 15))
+        else:
+            Label(card, text="💊", font=("Arial", 60),
+                  bg=COR_FUNDO, fg=COR_PRIMARIA).pack(pady=(0, 15))
+    except Exception as e:
+        print(f"[Login] Erro ao carregar logo: {e}")
+        Label(card, text="💊", font=("Arial", 60),
+              bg=COR_FUNDO, fg=COR_PRIMARIA).pack(pady=(0, 15))
+
+    # ─── Subtítulo ───
+    Label(card, text="Sistema de Farmácia",
+          font=("Arial", 12, "italic"),
+          bg=COR_FUNDO, fg=COR_TEXTO_SEC).pack(pady=(0, 30))
+
+    # ─── Formulário ───
+    form = Frame(card, bg=COR_FUNDO)
+    form.pack(fill=X)
+
+    Label(form, text="Iniciar Sessão",
+          font=("Arial", 18, "bold"),
+          bg=COR_FUNDO, fg=COR_TEXTO).pack(pady=(0, 25))
+
+    # Campo utilizador
+    Label(form, text="Nome de utilizador:",
+          font=("Arial", 11, "bold"),
+          bg=COR_FUNDO, fg=COR_TEXTO_SEC).pack(anchor=W, pady=(0, 6))
+
+    entry_user = Entry(form, font=("Arial", 13),
+                        bg=COR_CARD, fg=COR_TEXTO,
+                        insertbackground=COR_TEXTO,
+                        width=30, bd=0, relief=FLAT)
+    entry_user.pack(fill=X, pady=(0, 18), ipady=12)
     entry_user.focus()
-    
-    Label(corpo, text="Palavra-passe:", font=("Arial", 11, "bold"),
-          bg=COR_FUNDO, fg=COR_TEXTO).pack(anchor=W, pady=(0, 5))
-    
-    entry_pass = Entry(corpo, font=("Arial", 13), bd=1, relief=SOLID, show="●")
-    entry_pass.pack(fill=X, pady=(0, 15), ipady=8)
-    
-    # Mensagem (erro ou aviso)
+
+    # Campo senha
+    Label(form, text="Palavra-passe:",
+          font=("Arial", 11, "bold"),
+          bg=COR_FUNDO, fg=COR_TEXTO_SEC).pack(anchor=W, pady=(0, 6))
+
+    entry_pass = Entry(form, font=("Arial", 13), show="●",
+                        bg=COR_CARD, fg=COR_TEXTO,
+                        insertbackground=COR_TEXTO,
+                        width=30, bd=0, relief=FLAT)
+    entry_pass.pack(fill=X, pady=(0, 18), ipady=12)
+
+    # Mensagens
     msg_var = StringVar()
-    msg_label = Label(corpo, textvariable=msg_var, font=("Arial", 10),
-                       bg=COR_FUNDO, fg=COR_PERIGO,
-                       wraplength=350, justify=CENTER)
+    msg_label = Label(form, textvariable=msg_var,
+                       font=("Arial", 10), bg=COR_FUNDO, fg=COR_PERIGO,
+                       wraplength=400, justify=CENTER)
     msg_label.pack(pady=(0, 5))
-    
-    # Aviso de tentativas (linha separada)
+
     aviso_var = StringVar()
-    aviso_label = Label(corpo, textvariable=aviso_var, font=("Arial", 9, "italic"),
+    aviso_label = Label(form, textvariable=aviso_var,
+                         font=("Arial", 9, "italic"),
                          bg=COR_FUNDO, fg=COR_ALERTA,
-                         wraplength=350, justify=CENTER)
-    aviso_label.pack(pady=(0, 10))
-    
+                         wraplength=400, justify=CENTER)
+    aviso_label.pack(pady=(0, 15))
+
+    # ─── Função de login ───
     def fazer_login(event=None):
         global utilizador_logado
         username = entry_user.get().strip()
         senha = entry_pass.get()
-        
-        # Limpa mensagens antigas
+
         msg_var.set("")
         aviso_var.set("")
-        
+
         if not username or not senha:
             msg_var.set("⚠️ Preencha utilizador e palavra-passe")
             return
-        
-        # 1. Verificar se esta bloqueado ANTES de tentar
+
+        # Verificar bloqueio
         try:
             if esta_bloqueado(username):
                 minutos = tempo_restante_bloqueio(username)
@@ -97,74 +153,92 @@ def abrir_login():
                 msg_var.set("🚫 CONTA TEMPORARIAMENTE BLOQUEADA")
                 aviso_var.set(
                     f"Demasiadas tentativas falhadas.\n"
-                    f"Tente novamente em {minutos} minuto(s).\n\n"
-                    f"Por seguranca, esta tentativa foi registada."
+                    f"Tente novamente em {minutos} minuto(s)."
                 )
-                # Registar auditoria
                 try:
                     registar_auditoria(0, username, "LOGIN BLOQUEADO",
-                                        f"Tentativa de login numa conta bloqueada")
+                                        "Tentativa numa conta bloqueada")
                 except Exception:
                     pass
                 entry_pass.delete(0, END)
                 return
         except Exception as e:
-            print(f"[Login] Aviso ao verificar bloqueio: {e}")
-        
-        # 2. Tentar autenticar
+            print(f"[Login] Aviso: {e}")
+
+        # Autenticar
         sucesso, dados = autenticar(username, senha)
-        
+
         if sucesso:
-            # Login bem-sucedido
             utilizador_logado = dados
             registar_auditoria(dados["id"], dados["nome"], "LOGIN",
-                                f"Sessao iniciada")
+                                "Sessão iniciada")
             janela.destroy()
         else:
-            # Login falhou
             msg_label.config(fg=COR_PERIGO)
-            
-            # Verificar se a falha anterior bloqueou
             try:
                 if esta_bloqueado(username):
                     minutos = tempo_restante_bloqueio(username)
                     msg_var.set("🚫 CONTA BLOQUEADA")
                     aviso_var.set(
-                        f"Atingiu o limite de {3} tentativas falhadas.\n"
+                        f"Atingiu o limite de 3 tentativas.\n"
                         f"Tente novamente em {minutos} minuto(s)."
                     )
                 else:
                     restantes = tentativas_restantes(username)
                     msg_var.set("❌ Utilizador ou palavra-passe incorretos")
                     if restantes > 0:
-                        aviso_var.set(
-                            f"⚠️ Tentativas restantes: {restantes} de 3"
-                        )
+                        aviso_var.set(f"⚠️ Tentativas restantes: {restantes} de 3")
                     else:
-                        aviso_var.set("⚠️ A proxima tentativa bloqueara a conta.")
+                        aviso_var.set("⚠️ A próxima tentativa bloqueará a conta.")
             except Exception:
-                # Se der erro, mostra mensagem padrao
                 msg_var.set("❌ Utilizador ou palavra-passe incorretos")
-            
+
             entry_pass.delete(0, END)
             entry_pass.focus()
-    
+
     entry_user.bind('<Return>', lambda e: entry_pass.focus())
     entry_pass.bind('<Return>', fazer_login)
-    
-    Button(corpo, text="🔓 Entrar", font=("Arial", 13, "bold"),
-           bg=COR_PRIMARIA, fg="white", bd=0, cursor="hand2", height=2,
-           command=fazer_login).pack(fill=X, pady=(20, 10))
-    
-    Button(corpo, text="Sair", font=("Arial", 10),
-           bg=COR_FUNDO, fg=COR_PERIGO, bd=0, cursor="hand2",
-           command=janela.destroy).pack()
-    
+
+    # ─── Botão Entrar ───
+    btn_entrar = Button(
+        form,
+        text="🔓  Entrar",
+        font=("Arial", 14, "bold"),
+        bg=COR_PRIMARIA,
+        fg="white",
+        activebackground="#6d28d9",
+        activeforeground="white",
+        bd=0,
+        relief=FLAT,
+        cursor="hand2",
+        height=2,
+        command=fazer_login,
+    )
+    btn_entrar.pack(fill=X, pady=(10, 12))
+
+    # ─── Botão Sair ───
+    btn_sair = Button(
+        form,
+        text="Sair",
+        font=("Arial", 11),
+        bg=COR_FUNDO,
+        fg=COR_TEXTO_SEC,
+        activebackground=COR_FUNDO,
+        activeforeground=COR_PERIGO,
+        bd=0,
+        relief=FLAT,
+        cursor="hand2",
+        command=janela.destroy,
+    )
+    btn_sair.pack()
+
+    # ─── Rodapé fixo no fundo ───
     Label(janela, text="JAM Soft © 2026 — Todos os direitos reservados",
-          font=("Arial", 8), bg=COR_FUNDO, fg="#9ca3af").pack(side=BOTTOM, pady=10)
-    
+          font=("Arial", 9), bg=COR_FUNDO, fg=COR_TEXTO_SEC).pack(
+              side=BOTTOM, pady=20)
+
     janela.mainloop()
-    
+
     return utilizador_logado is not None
 
 
@@ -174,9 +248,9 @@ def obter_utilizador():
 
 
 def terminar_sessao():
-    """Termina a sessao do utilizador."""
+    """Termina a sessão do utilizador."""
     global utilizador_logado
     if utilizador_logado:
         registar_auditoria(utilizador_logado["id"], utilizador_logado["nome"],
-                            "LOGOUT", "Sessao terminada")
+                            "LOGOUT", "Sessão terminada")
     utilizador_logado = None

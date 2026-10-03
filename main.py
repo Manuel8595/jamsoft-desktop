@@ -147,6 +147,28 @@ root.geometry("1280x800")
 root.configure(bg=COR_FUNDO)
 root.state("zoomed")
 
+# ─── Ícone da janela (.ico com múltiplos tamanhos) ───
+try:
+    from pathlib import Path
+
+    caminho_ico = Path(__file__).parent / "logos" / "jamsoft.ico"
+    if caminho_ico.exists():
+        root.iconbitmap(default=str(caminho_ico))
+        print("[Icon] Icone .ico aplicado")
+    else:
+        # Fallback: PNG
+        from PIL import Image, ImageTk
+        caminho_png = Path(__file__).parent / "logos" / "icon_192.png"
+        if caminho_png.exists():
+            _img_icon = Image.open(caminho_png).convert("RGBA")
+            _icon_tk = ImageTk.PhotoImage(_img_icon)
+            root.iconphoto(True, _icon_tk)
+            root._icon_ref = _icon_tk
+            print("[Icon] Icone PNG aplicado (fallback)")
+        else:
+            print("[Icon] Nenhum icone encontrado")
+except Exception as e:
+    print(f"[Icon] Aviso: {e}")
 
 def com_permissao(acao, func, *args):
     def wrapper():
