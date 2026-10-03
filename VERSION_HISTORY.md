@@ -1,4 +1,20 @@
 # Histórico de Versões — JAM Soft Desktop
+
+## v1.0.2 — 03/10/2026
+
+### Adicionado
+- Login em fullscreen com card centralizado
+- Ícone da aplicação nas janelas (.ico com múltiplos tamanhos)
+- Logo no ecrã de login
+- Cores alinhadas com o logotipo (roxo + dourado)
+- Script `criar_ico.py` — converte PNG para ICO
+
+### Alterado
+- `login.py` reescrito com design moderno
+- `main.py` com ícone da janela
+
+---
+
 ## v1.0.1 — 03/10/2026
 
 ### Adicionado
@@ -15,7 +31,7 @@
 
 ---
 
-## v1.0.0 — 2026-10-03
+## v1.0.0 — 03/10/2026
 
 **Versão inicial** 🎉
 
