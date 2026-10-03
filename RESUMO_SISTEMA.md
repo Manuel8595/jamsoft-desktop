@@ -42,63 +42,35 @@ O **JAM Soft** é um sistema completo de gestão de farmácias em Angola, compos
 | **Backup** | Triplo (local + OneDrive + Gmail) | Automático |
 | **Auto-update** | Actualizações via GitHub | `git pull` automático |
 
----
-
 ## 2. Arquitectura
-┌─────────────────────────────────────────────────────────┐
-│                    FARMÁCIA (Desktop)                   │
-│                                                          │
-│  ┌──────────────────────────────────────────────────┐   │
-│  │  Aplicação JAM Soft (Python + Tkinter)           │   │
-│  │  • PDV (vendas)                                   │   │
-│  │  • Stock (com FEFO)                               │   │
-│  │  • Caixa (turnos, TPA)                            │   │
-│  │  • Fiscal (facturas, SAF-T)                       │   │
-│  │  • IBT (transferências)                           │   │
-│  └──────────────────────────────────────────────────┘   │
-│                          │                               │
-│                          ▼                               │
-│  ┌──────────────────────────────────────────────────┐   │
-│  │  SQLite Local (farmacia.db)                       │   │
-│  └──────────────────────────────────────────────────┘   │
-│                          │                               │
-│         ┌────────────────┼────────────────┐              │
-│         ▼                ▼                ▼              │
-│    ┌─────────┐     ┌──────────┐    ┌──────────┐         │
-│    │ Backups │     │ OneDrive │    │  GitHub  │         │
-│    │ Locais  │     │ (externo)│    │ (update) │         │
-│    └─────────┘     └──────────┘    └──────────┘         │
-└─────────────────────────────────────────────────────────┘
-                          │
-                ┌─────────┴─────────┐
-                │  Sincronização    │
-                │   (5 em 5 min)    │
-                └─────────┬─────────┘
-                          │
-                          ▼
-┌─────────────────────────────────────────────────────────┐
-│                  NUVEM (Supabase)                        │
-│  ┌──────────────────────────────────────────────────┐   │
-│  │  PostgreSQL (dados centrais)                      │   │
-│  └──────────────────────────────────────────────────┘   │
-└─────────────────────────────────────────────────────────┘
-                          │
-                          ▼
-┌─────────────────────────────────────────────────────────┐
-│              PLATAFORMA WEB (Streamlit)                  │
-│  ┌──────────────────────────────────────────────────┐   │
-│  │  Painel do CEO / Gestores                         │   │
-│  │  • Resumo do País                                 │   │
-│  │  • Ranking de Farmácias                           │   │
-│  │  • Alertas                                        │   │
-│  │  • Orçamentos (com IA)                            │   │
-│  │  • Vendas, Stock, Perdas                          │   │
-│  │  • Financeiro, Utilizadores                       │   │
-│  │  • Transferências IBT                             │   │
-│  │  • Chat IA                                        │   │
-│  │  • Backup de Dados                                │   │
-│  └──────────────────────────────────────────────────┘   │
-└─────────────────────────────────────────────────────────┘
+
+O JAM Soft é composto por **3 camadas** que trabalham em conjunto.
+
+### 2.1 Farmácia (Desktop)
+
+Funciona no PC da farmácia, mesmo sem internet.
+
+- Aplicação JAM Soft (Python + Tkinter)
+- Módulos: PDV, Stock, Caixa, Fiscal, IBT
+- Base de dados local SQLite (farmacia.db)
+- Backups automáticos: locais + OneDrive
+- Auto-update via GitHub
+
+### 2.2 Nuvem (Supabase)
+
+Base de dados central com dados de todas as farmácias.
+
+- Sincronização a cada 5 minutos
+- Guarda: vendas, stock, clientes, facturas
+- Segurança: JWT do utilizador
+
+### 2.3 Plataforma Web (Streamlit)
+
+Painel de controlo para o CEO.
+
+- Acesso: computador ou telemóvel (PWA)
+- Ver todas as farmácias em tempo real
+- Chat IA para perguntas em linguagem natural
 
 NICIAR_FARMACIA.bat:
 [2/5] A criar backup da base de dados...
