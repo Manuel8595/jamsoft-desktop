@@ -11,6 +11,7 @@ from login import abrir_login, obter_utilizador, terminar_sessao
 from utilizadores import abrir_utilizadores
 from fornecedores import abrir_fornecedores
 from clientes import abrir_clientes
+from version import obter_versao
 from categorias import abrir_categorias
 from compras import abrir_compras
 from inventario import abrir_inventario
@@ -694,7 +695,8 @@ def _reiniciar_app():
     subprocess.Popen([sys.executable] + sys.argv)
     sys.exit(0)
 
-        # ============================================================
+
+# ============================================================
 # ============ HEADER PREMIUM ================================
 # ============================================================
 
@@ -715,6 +717,11 @@ Label(header_inner, text="JAM Soft",
 Label(header_inner, text="Premium Edition",
       font=("Segoe UI", 10, "italic"),
       bg=COR_CARD, fg=COR_TEXTO_SEC).pack(side=LEFT, pady=(25, 15))
+
+# Versão da aplicação
+Label(header_inner, text=f"v{obter_versao()}",
+      font=("Segoe UI", 9, "bold"),
+      bg=COR_CARD, fg=COR_DOURADO).pack(side=LEFT, padx=(10, 0), pady=(27, 15))
 
 info_frame = Frame(header_inner, bg=COR_CARD)
 info_frame.pack(side=RIGHT, padx=30, pady=15)
@@ -1257,8 +1264,6 @@ if pode_sincronizar or pode_ver_fila:
         col += 1
 
 
-
-
 # ============================================================
 # ============ TRANSFERENCIAS ENTRE FILIAIS (IBT) ============
 # ============================================================
@@ -1319,12 +1324,18 @@ rodape.pack_propagate(False)
 linha_rodape = Frame(rodape, bg=COR_DOURADO, height=2)
 linha_rodape.pack(fill=X)
 
+# Container interno do rodapé
 rodape_inner = Frame(rodape, bg=COR_CARD)
 rodape_inner.pack(fill=BOTH, expand=True)
 
 estado_label = Label(rodape_inner, text="...", font=("Segoe UI", 10, "bold"),
                        bg=COR_CARD, fg=COR_ALERTA)
 estado_label.pack(side=LEFT, padx=20, pady=15)
+
+# Versão no rodapé
+Label(rodape_inner, text=f"JAM Soft v{obter_versao()}",
+      font=("Segoe UI", 9), bg=COR_CARD, fg=COR_TEXTO_SEC).pack(
+          side=LEFT, padx=(0, 10), pady=15)
 
 tempo_label = Label(rodape_inner, text="", font=("Segoe UI", 9),
                      bg=COR_CARD, fg=COR_TEXTO_SEC)
