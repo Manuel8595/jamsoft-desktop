@@ -3680,41 +3680,56 @@ def registar_movimento_saldo(tipo, valor, referencia, descricao, utilizador_nome
 
 def criar_deposito(valor, banco, numero_comprovante, observacoes,
                     gerente_id, gerente_nome, turno_id=None):
+    import uuid as _uuid
     limite = float(obter_config_financeira("limite_deposito_gerente", "500000"))
-    
+
     precisa_aprovacao = valor > limite
     estado = "PENDENTE_APROVACAO" if precisa_aprovacao else "REGISTADO"
     referencia = gerar_referencia_deposito()
-    
+
     conn = conectar()
     cur = conn.cursor()
     agora = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    
+
+    # Gerar UUID para sincronizacao
+    uid = str(_uuid.uuid4())
+
+    # Buscar farmacia_id local
+    try:
+        from identidade import obter_farmacia_id, obter_terminal_codigo
+        farm_id = obter_farmacia_id()
+        terminal = obter_terminal_codigo()
+    except Exception:
+        farm_id = 1
+        terminal = "TERM-01"
+
     cur.execute("""
-        INSERT INTO depositos 
+        INSERT INTO depositos
         (referencia, data, hora, valor, banco, numero_comprovante, observacoes,
-         turno_id, gerente_id, gerente_nome, estado, criado_em)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+         turno_id, gerente_id, gerente_nome, estado, criado_em,
+         uuid, sincronizado, farmacia_id, terminal_id)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?, ?)
     """, (
         referencia,
         datetime.now().strftime("%Y-%m-%d"),
         datetime.now().strftime("%H:%M"),
         valor, banco, numero_comprovante, observacoes,
-        turno_id, gerente_id, gerente_nome, estado, agora
+        turno_id, gerente_id, gerente_nome, estado, agora,
+        uid, farm_id, terminal
     ))
-    
+
     conn.commit()
     conn.close()
-    
+
     if not precisa_aprovacao:
         registar_movimento_saldo(
             "ENTRADA", valor, referencia,
             f"Deposito {banco} - {referencia}",
             gerente_nome
         )
-    
-    return referencia, estado, precisa_aprovacao
 
+    print(f"[Deposito] Criado {referencia} com UUID {uid[:8]}...")
+    return referencia, estado, precisa_aprovacao
 
 def aprovar_deposito(deposito_id, admin_nome):
     conn = conectar()

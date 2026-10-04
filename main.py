@@ -20,6 +20,7 @@ from relatorios import abrir_relatorios
 from backup import abrir_backup, backup_automatico
 from impressao import abrir_impressao
 from devolucoes import abrir_devolucoes
+from depositos import abrir_depositos
 from produtos import abrir_produtos
 from dashboard import abrir_dashboard
 from perdas import abrir_perdas
@@ -61,40 +62,36 @@ utilizador = obter_utilizador()
 PERFIL = utilizador["perfil"]
 print(f"Bem-vindo(a), {utilizador['nome']} ({NOMES_PERFIS.get(PERFIL, PERFIL)})")
 
-# ─── LOGIN SUPABASE (automático com refresh token) ──────────
+# --- LOGIN SUPABASE ---
 try:
     from sincronizacao import (login_supabase, renovar_sessao,
                                 guardar_sessao, carregar_sessao)
     from tkinter import simpledialog
 
-    # 1. Tentar carregar sessão guardada
     sessao = carregar_sessao()
     logado = False
 
     if sessao:
         ok_renova, msg = renovar_sessao(sessao)
         if ok_renova:
-            print("[Sync] Sessão restaurada automaticamente")
+            print("[Sync] Sessao restaurada automaticamente")
             logado = True
-                # Baixar orçamentos do Supabase (web → PC)
+
     if logado:
         try:
             from sincronizacao import baixar_orcamentos_do_supabase
             n = baixar_orcamentos_do_supabase()
             if n > 0:
-                print(f"[Sync] {n} orçamentos sincronizados para o PC")
+                print(f"[Sync] {n} orcamentos sincronizados para o PC")
         except Exception as e_bx:
             print(f"[Sync] Aviso ao baixar orcamentos: {e_bx}")
-        else:
-            print(f"[Sync] Sessão expirada: {msg}")
 
-    # 2. Se não há sessão, pedir credenciais (só a primeira vez)
     if not logado:
         resposta = messagebox.askyesno(
-            "Ativar Sincronização",
-            "Queres ligar a sincronização com a nuvem?\n\n"
+            "Ativar Sincronizacao",
+            "Queres ligar a sincronizacao com a nuvem?\n\n"
             "Isto permite que as vendas apareçam na plataforma web.\n\n"
-            "Só precisas de fazer isto UMA VEZ."
+            "So precisas de fazer isto UMA VEZ."
         )
 
         if resposta:
@@ -105,15 +102,15 @@ try:
                     ok_sb, dados_sb = login_supabase(email_sb.strip().lower(), senha_sb)
                     if ok_sb:
                         guardar_sessao(dados_sb)
-                        messagebox.showinfo("Sincronização", "Ligado à nuvem com sucesso!")
+                        messagebox.showinfo("Sincronizacao", "Ligado a nuvem com sucesso!")
                         logado = True
                     else:
-                        messagebox.showwarning("Sincronização", f"Não foi possível ligar:\n{dados_sb}")
+                        messagebox.showwarning("Sincronizacao", f"Nao foi possivel ligar:\n{dados_sb}")
 
 except Exception as e_sync:
     print(f"[Sync] Aviso: {e_sync}")
 
-# ────────────────────────────────────────────────────────────
+# --- BACKUP ---
 backup_automatico(utilizador)
 
 COR_FUNDO = "#0f172a"
@@ -148,7 +145,7 @@ root.geometry("1280x800")
 root.configure(bg=COR_FUNDO)
 root.state("zoomed")
 
-# ─── Ícone da janela (.ico com múltiplos tamanhos) ───
+# --- ICONE DA JANELA ---
 try:
     from pathlib import Path
 
@@ -157,7 +154,6 @@ try:
         root.iconbitmap(default=str(caminho_ico))
         print("[Icon] Icone .ico aplicado")
     else:
-        # Fallback: PNG
         from PIL import Image, ImageTk
         caminho_png = Path(__file__).parent / "logos" / "icon_192.png"
         if caminho_png.exists():
@@ -170,6 +166,7 @@ try:
             print("[Icon] Nenhum icone encontrado")
 except Exception as e:
     print(f"[Icon] Aviso: {e}")
+
 
 def com_permissao(acao, func, *args):
     def wrapper():
@@ -199,13 +196,13 @@ class CardBotao:
         self.cor_normal = cor
         self.cor_hover = self._escurecer(cor)
         self.comando = comando
-        
+
         self.outer = Frame(parent, bg=cor, bd=0, width=largura, height=altura)
         self.outer.pack_propagate(False)
-        
+
         self.inner = Frame(self.outer, bg=cor, cursor="hand2")
         self.inner.pack(fill=BOTH, expand=True, padx=2, pady=2)
-        
+
         self.lbl_principal = Label(
             self.inner,
             text=texto,
@@ -215,7 +212,7 @@ class CardBotao:
             justify=CENTER
         )
         self.lbl_principal.pack(pady=(8, 2), padx=5)
-        
+
         self.lbl_atalho = None
         if atalho:
             self.lbl_atalho = Label(
@@ -224,7 +221,7 @@ class CardBotao:
                 bg=cor, fg="#e0e7ff", cursor="hand2"
             )
             self.lbl_atalho.pack()
-        
+
         self.lbl_sub = None
         if subtitulo:
             self.lbl_sub = Label(
@@ -235,18 +232,18 @@ class CardBotao:
                 justify=CENTER
             )
             self.lbl_sub.pack(pady=(2, 6), padx=5)
-        
+
         self.widgets_hover = [self.outer, self.inner, self.lbl_principal]
         if self.lbl_atalho:
             self.widgets_hover.append(self.lbl_atalho)
         if self.lbl_sub:
             self.widgets_hover.append(self.lbl_sub)
-        
+
         for widget in self.widgets_hover:
             widget.bind("<Enter>", self._on_enter)
             widget.bind("<Leave>", self._on_leave)
             widget.bind("<Button-1>", self._on_click)
-    
+
     def _escurecer(self, hex_cor, fator=0.85):
         try:
             hex_cor = hex_cor.lstrip("#")
@@ -255,25 +252,25 @@ class CardBotao:
             return f"#{r:02x}{g:02x}{b:02x}"
         except Exception:
             return hex_cor
-    
+
     def _on_enter(self, event):
         for w in self.widgets_hover:
             try:
                 w.configure(bg=self.cor_hover)
             except Exception:
                 pass
-    
+
     def _on_leave(self, event):
         for w in self.widgets_hover:
             try:
                 w.configure(bg=self.cor_normal)
             except Exception:
                 pass
-    
+
     def _on_click(self, event):
         if self.comando:
             self.comando()
-    
+
     def grid(self, **kwargs):
         self.outer.grid(**kwargs)
         return self
@@ -302,30 +299,30 @@ def executar_sincronizacao(utilizador_logado, parent_window):
     prog.configure(bg=COR_CARD)
     prog.transient(parent_window)
     prog.grab_set()
-    
+
     prog.update_idletasks()
     x = (prog.winfo_screenwidth() - 450) // 2
     y = (prog.winfo_screenheight() - 220) // 2
     prog.geometry(f"450x220+{x}+{y}")
-    
+
     Label(prog, text="A sincronizar com a nuvem...",
           font=("Segoe UI", 14, "bold"), bg=COR_CARD, fg=COR_TEXTO).pack(pady=(40, 10))
     Label(prog, text="Aguarde um momento...",
           font=("Segoe UI", 10, "italic"), bg=COR_CARD, fg=COR_TEXTO_SEC).pack()
     prog.update()
-    
+
     try:
         resultado = sincronizar_tudo()
     except Exception as e:
         prog.destroy()
         messagebox.showerror("Erro", f"Erro na sincronizacao: {e}")
         return
-    
+
     prog.destroy()
-    
+
     if resultado["sucesso"]:
         registar_sincronizacao(True, resultado["total"])
-        
+
         if resultado["total"] > 0:
             messagebox.showinfo("Sincronizacao Concluida",
                 f"Sincronizacao concluida com sucesso!\n\n"
@@ -348,51 +345,51 @@ def executar_sincronizacao(utilizador_logado, parent_window):
 
 def abrir_diagnostico_fila(utilizador_logado, parent_window):
     pode_limpar = tem_permissao(PERFIL, "nuvem.limpar_fila")
-    
+
     janela = Toplevel(parent_window)
     janela.title("Estado da Fila de Sincronizacao")
     janela.geometry("1000x650")
     janela.configure(bg=COR_FUNDO)
     janela.transient(parent_window)
-    
+
     janela.update_idletasks()
     x = (janela.winfo_screenwidth() - 1000) // 2
     y = (janela.winfo_screenheight() - 650) // 2
     janela.geometry(f"1000x650+{x}+{y}")
-    
+
     header = Frame(janela, bg=CAT_NUVEM, height=70)
     header.pack(fill=X)
     header.pack_propagate(False)
     Label(header, text="Estado da Fila de Sincronizacao",
           font=("Segoe UI", 18, "bold"), bg=CAT_NUVEM, fg="white").pack(pady=20)
-    
+
     e = fila_sync.estatisticas()
-    
+
     frame_cards = Frame(janela, bg=COR_FUNDO)
     frame_cards.pack(fill=X, padx=20, pady=20)
-    
+
     def criar_card_stat(parent, titulo, valor, cor, coluna):
         card = Frame(parent, bg=COR_CARD, highlightthickness=2, highlightbackground=cor)
         card.grid(row=0, column=coluna, padx=8, pady=5, sticky="nsew")
         parent.columnconfigure(coluna, weight=1)
-        
+
         Label(card, text=titulo, font=("Segoe UI", 10, "bold"),
               bg=COR_CARD, fg=COR_TEXTO_SEC).pack(pady=(15, 3))
         Label(card, text=str(valor), font=("Segoe UI", 24, "bold"),
               bg=COR_CARD, fg=cor).pack(pady=(0, 15))
-    
+
     criar_card_stat(frame_cards, "Total", e["total"], COR_TEXTO, 0)
     criar_card_stat(frame_cards, "Pendentes", e["pendentes"], COR_ALERTA, 1)
     criar_card_stat(frame_cards, "Enviados", e["enviados"], COR_VERDE, 2)
     criar_card_stat(frame_cards, "Conflitos", e["conflitos"], COR_VERMELHO, 3)
     criar_card_stat(frame_cards, "Abandonados", e["abandonados"], "#7f1d1d", 4)
-    
+
     Label(janela, text="Operacoes com problema:",
           font=("Segoe UI", 12, "bold"), bg=COR_FUNDO, fg=COR_TEXTO).pack(anchor=W, padx=25, pady=(10, 5))
-    
+
     frame_tab = Frame(janela, bg=COR_FUNDO)
     frame_tab.pack(fill=BOTH, expand=True, padx=20, pady=5)
-    
+
     colunas = ("UUID", "Tipo", "Estado", "Tent.", "Ultima Tent.", "Erro")
     tree = ttk.Treeview(frame_tab, columns=colunas, show="headings", height=12)
     tree.heading("UUID", text="UUID")
@@ -408,11 +405,11 @@ def abrir_diagnostico_fila(utilizador_logado, parent_window):
     tree.column("Ultima Tent.", width=140)
     tree.column("Erro", width=350)
     tree.pack(fill=BOTH, expand=True, side=LEFT)
-    
+
     sb = Scrollbar(frame_tab, orient="vertical", command=tree.yview)
     sb.pack(side=RIGHT, fill=Y)
     tree.configure(yscrollcommand=sb.set)
-    
+
     for err in fila_sync.detalhes_erros(20):
         uuid_op, tipo, estado, tent, ultima, erro = err
         tag = "conflito" if estado == "CONFLITO" else ("abandonado" if estado == "ABANDONADO" else "erro")
@@ -421,18 +418,18 @@ def abrir_diagnostico_fila(utilizador_logado, parent_window):
             tipo or "-", estado, tent, ultima or "-",
             (erro or "-")[:60]
         ), tags=(tag,))
-    
+
     tree.tag_configure("erro", background="#3f2a13", foreground=COR_ALERTA)
     tree.tag_configure("conflito", background="#3f1a1a", foreground=COR_VERMELHO)
     tree.tag_configure("abandonado", background="#2a1a1a", foreground="#fca5a5")
-    
+
     frame_btn = Frame(janela, bg=COR_FUNDO)
     frame_btn.pack(fill=X, pady=15)
-    
+
     def actualizar():
         janela.destroy()
         abrir_diagnostico_fila(utilizador_logado, parent_window)
-    
+
     def limpar():
         try:
             n = fila_sync.limpar_enviados(30)
@@ -442,13 +439,13 @@ def abrir_diagnostico_fila(utilizador_logado, parent_window):
             actualizar()
         except Exception as ex:
             messagebox.showerror("Erro", str(ex))
-    
+
     estilo_btn = {"font": ("Segoe UI", 11, "bold"), "bd": 0, "cursor": "hand2",
                   "fg": "white", "width": 22, "height": 2}
-    
+
     Button(frame_btn, text="Actualizar", bg=CAT_NUVEM,
            command=actualizar, **estilo_btn).pack(side=LEFT, padx=10)
-    
+
     if pode_limpar:
         Button(frame_btn, text="Limpar Enviados (+30d)", bg="#64748b",
                command=limpar, **estilo_btn).pack(side=LEFT, padx=10)
@@ -456,7 +453,7 @@ def abrir_diagnostico_fila(utilizador_logado, parent_window):
         Label(frame_btn, text="Somente leitura (Auditor)",
               font=("Segoe UI", 9, "italic"), bg=COR_FUNDO,
               fg=COR_TEXTO_SEC).pack(side=LEFT, padx=10)
-    
+
     Button(frame_btn, text="Fechar", bg=COR_VERMELHO,
            command=janela.destroy, **estilo_btn).pack(side=RIGHT, padx=10)
 
@@ -544,32 +541,32 @@ def abrir_relatorio_fefo():
     janela.title("Relatorio FEFO")
     janela.geometry("1000x600")
     janela.configure(bg=COR_FUNDO)
-    
+
     header = Frame(janela, bg="#be185d", height=70)
     header.pack(fill=X)
     header.pack_propagate(False)
     Label(header, text="Relatorio FEFO - Primeiro a Vencer",
           font=("Segoe UI", 16, "bold"), bg="#be185d", fg="white").pack(pady=20)
-    
+
     frame_tab = Frame(janela, bg=COR_FUNDO)
     frame_tab.pack(fill=BOTH, expand=True, padx=15, pady=15)
-    
+
     colunas = ("Produto", "Codigo", "Lote", "Validade", "Qtd", "Prioridade")
     tree = ttk.Treeview(frame_tab, columns=colunas, show="headings", height=18)
     for col in colunas:
         tree.heading(col, text=col)
         tree.column(col, width=150)
     tree.pack(fill=BOTH, expand=True)
-    
+
     from datetime import datetime as dt
     hoje = dt.now().date()
-    
+
     for lote in lotes_para_relatorio_fefo():
         nome, codigo, num_lote, validade, qtd = lote
         try:
             data_v = dt.strptime(validade, "%Y-%m-%d").date()
             dias = (data_v - hoje).days
-            
+
             if dias < 0:
                 prio = f"VENCIDO ({abs(dias)}d)"
                 tag = "vencido"
@@ -582,13 +579,13 @@ def abrir_relatorio_fefo():
             else:
                 prio = f"OK ({dias}d)"
                 tag = "ok"
-            
+
             tree.insert("", END, values=(nome, codigo or "-", num_lote or "-",
                                           validade, qtd, prio), tags=(tag,))
         except Exception:
             tree.insert("", END, values=(nome, codigo or "-", num_lote or "-",
                                           validade or "-", qtd, "?"))
-    
+
     tree.tag_configure("vencido", background="#3f1a1a", foreground="#fca5a5")
     tree.tag_configure("urgente", background="#3f2a13", foreground="#fdba74")
     tree.tag_configure("atencao", background="#3f3a13", foreground="#fde68a")
@@ -615,9 +612,6 @@ def abrir_auditoria():
 
 
 def sair_sistema():
-    """Termina a sessao e volta ao formulario de login."""
-
-    # Verificar se ha dia aberto (informativo apenas)
     avisos = []
     try:
         dia = dia_aberto()
@@ -634,7 +628,7 @@ def sair_sistema():
         corpo = "\n\n".join(avisos)
         msg = (
             f"{corpo}\n\n"
-            f"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n"
+            f"--------------------------------\n\n"
             f"O dia continua aberto quando sair.\n"
             f"Pode voltar a entrar a qualquer momento.\n\n"
             f"Deseja terminar a sessao?"
@@ -645,13 +639,11 @@ def sair_sistema():
         if not messagebox.askyesno("Sair", "Deseja terminar a sessao?"):
             return
 
-    # Parar auto-sync
     try:
         parar_auto_sync()
     except Exception:
         pass
 
-    # Parar monitor de inactividade
     try:
         mon = globals().get("monitor_inatividade")
         if mon:
@@ -659,10 +651,8 @@ def sair_sistema():
     except Exception:
         pass
 
-    # Marcar como nao logado
     terminar_sessao()
 
-    # Fechar TODAS as janelas Toplevel
     try:
         for w in root.winfo_children():
             if isinstance(w, Toplevel):
@@ -670,19 +660,14 @@ def sair_sistema():
     except Exception:
         pass
 
-    # Limpar conteudo da root
     for w in root.winfo_children():
         w.destroy()
 
-    # Reduzir root
     root.withdraw()
-
-    # Abrir login novamente
     root.after(100, _reiniciar_app)
 
 
 def _reiniciar_app():
-    """Recarrega a app apos logout."""
     import subprocess
     import sys
 
@@ -691,13 +676,12 @@ def _reiniciar_app():
     except Exception:
         pass
 
-    # Reiniciar o processo Python
     subprocess.Popen([sys.executable] + sys.argv)
     sys.exit(0)
 
 
 # ============================================================
-# ============ HEADER PREMIUM ================================
+# HEADER PREMIUM
 # ============================================================
 
 header = Frame(root, bg=COR_CARD, height=90)
@@ -718,7 +702,6 @@ Label(header_inner, text="Premium Edition",
       font=("Segoe UI", 10, "italic"),
       bg=COR_CARD, fg=COR_TEXTO_SEC).pack(side=LEFT, pady=(25, 15))
 
-# Versão da aplicação
 Label(header_inner, text=f"v{obter_versao()}",
       font=("Segoe UI", 9, "bold"),
       bg=COR_CARD, fg=COR_DOURADO).pack(side=LEFT, padx=(10, 0), pady=(27, 15))
@@ -735,7 +718,7 @@ Label(info_frame, text=f"{NOMES_PERFIS.get(PERFIL, PERFIL).upper()}",
 
 
 # ============================================================
-# ============ PAINEL DE METAS ===============================
+# PAINEL DE METAS
 # ============================================================
 
 painel_metas_frame = Frame(root, bg=COR_CARD, highlightthickness=1,
@@ -746,7 +729,7 @@ criar_painel_metas(painel_metas_frame, utilizador)
 
 
 # ============================================================
-# ============ PAINEL DE KPIs ================================
+# PAINEL DE KPIs
 # ============================================================
 
 kpis_frame = Frame(root, bg=COR_FUNDO)
@@ -821,7 +804,7 @@ except Exception:
 
 
 # ============================================================
-# ============ PERMISSOES ====================================
+# PERMISSOES
 # ============================================================
 
 pode_dashboard = tem_permissao(PERFIL, "dashboard.ver")
@@ -852,6 +835,7 @@ pode_config_farmacia = (PERFIL == "admin")
 pode_sincronizar = tem_permissao(PERFIL, "nuvem.sincronizar")
 pode_ver_fila = tem_permissao(PERFIL, "nuvem.ver_fila")
 pode_devolucoes = tem_permissao(PERFIL, "devolucoes.ver")
+pode_depositos = PERFIL in ("admin", "gerente")
 
 pode_operar_pdv = PERFIL in ("gerente", "farmaceutico")
 pode_gerir_dia = PERFIL in ("gerente",)
@@ -859,7 +843,7 @@ pode_gerir_turno = PERFIL in ("gerente", "farmaceutico")
 
 
 # ============================================================
-# ============ MENU ==========================================
+# MENU
 # ============================================================
 
 menu_container = Frame(root, bg=COR_FUNDO)
@@ -897,9 +881,7 @@ def criar_linha_botoes(parent):
     return f
 
 
-# ============================================================
-# ============ ACAO PRINCIPAL ================================
-# ============================================================
+# --- ACAO PRINCIPAL ---
 
 if pode_pdv and pode_operar_pdv:
     criar_separador(scrollable, "ACAO PRINCIPAL", COR_DOURADO)
@@ -914,31 +896,29 @@ if pode_pdv and pode_operar_pdv:
     Label(btn_grande, text="Pressione F2 ou clique aqui",
           font=("Segoe UI", 10, "italic"),
           bg=CAT_VENDAS, fg="#e0e7ff", cursor="hand2").pack(pady=(0, 5))
-    
+
     def _click_pdv(event=None):
         if not verificar_dia_aberto_para_pdv():
             return
         com_permissao("pdv.abrir", abrir_pdv, utilizador)()
-    
+
     def _hover_on(event):
         for w in [btn_grande] + list(btn_grande.winfo_children()):
             try: w.configure(bg=COR_PRIMARIA_HOVER)
             except: pass
-    
+
     def _hover_off(event):
         for w in [btn_grande] + list(btn_grande.winfo_children()):
             try: w.configure(bg=CAT_VENDAS)
             except: pass
-    
+
     for w in [btn_grande] + list(btn_grande.winfo_children()):
         w.bind("<Enter>", _hover_on)
         w.bind("<Leave>", _hover_off)
         w.bind("<Button-1>", _click_pdv)
 
 
-# ============================================================
-# ============ DIA DE OPERACAO ===============================
-# ============================================================
+# --- DIA DE OPERACAO ---
 
 pode_ver_metas = True
 pode_ver_relatorios = PERFIL in ("admin", "gerente", "auditor")
@@ -947,7 +927,7 @@ if pode_gerir_dia or pode_ver_metas or pode_ver_relatorios:
     criar_separador(scrollable, "DIA DE OPERACAO", COR_DOURADO)
     linha_dia = criar_linha_botoes(scrollable)
     col_dia = 0
-    
+
     if pode_gerir_dia:
         dia_atual = dia_aberto()
         if dia_atual:
@@ -958,27 +938,27 @@ if pode_gerir_dia or pode_ver_metas or pode_ver_relatorios:
             texto_dia = "Abrir Dia"
             sub_dia = "Iniciar operacao"
             cor_dia = COR_VERDE
-        
+
         CardBotao(linha_dia, texto_dia, sub_dia, "",
                    cor_dia,
                    lambda: abrir_fecho_dia(utilizador, root)
                    ).grid(row=0, column=col_dia, padx=5)
         col_dia += 1
-    
+
     if pode_ver_metas:
         CardBotao(linha_dia, "Metas", "Orcamentos", "",
                    COR_DOURADO,
                    lambda: abrir_metas(utilizador, root)
                    ).grid(row=0, column=col_dia, padx=5)
         col_dia += 1
-    
+
     if pode_gerir_dia:
         CardBotao(linha_dia, "IA Orcamento", "Sugestao inteligente", "",
                    COR_ROXO_CLARO,
                    lambda: abrir_ia_orcamento(utilizador, root)
                    ).grid(row=0, column=col_dia, padx=5)
         col_dia += 1
-    
+
     if pode_ver_relatorios:
         CardBotao(linha_dia, "Relatorios", "Arquivados", "",
                    COR_AZUL,
@@ -987,15 +967,12 @@ if pode_gerir_dia or pode_ver_metas or pode_ver_relatorios:
         col_dia += 1
 
 
-# ============================================================
-# ============ GESTAO DE CAIXA ===============================
-# ============================================================
+# --- GESTAO DE CAIXA ---
 
 if pode_caixa:
     criar_separador(scrollable, "GESTAO DE CAIXA", CAT_CAIXA)
     linha_cx = criar_linha_botoes(scrollable)
 
-    # Verificar estado do caixa
     cx_atual = caixa_aberto()
     if cx_atual:
         sub_caixa = f"Caixa #{cx_atual[0]} ABERTO"
@@ -1014,9 +991,8 @@ if pode_caixa:
                lambda: abrir_historico_caixas()
                ).grid(row=0, column=1, padx=5)
 
-# ============================================================
-# ============ VENDAS ========================================
-# ============================================================
+
+# --- VENDAS ---
 
 tem_vendas = pode_painel_auditoria or pode_dashboard or pode_operar_pdv or pode_fiscal or pode_compras
 
@@ -1076,9 +1052,7 @@ if tem_vendas:
         col += 1
 
 
-# ============================================================
-# ============ DEVOLUCOES ====================================
-# ============================================================
+# --- DEVOLUCOES ---
 
 if pode_devolucoes:
     criar_separador(scrollable, "DEVOLUCOES", "#dc2626")
@@ -1089,9 +1063,18 @@ if pode_devolucoes:
                ).grid(row=0, column=0, padx=5)
 
 
-# ============================================================
-# ============ CADASTROS =====================================
-# ============================================================
+# --- DEPOSITOS BANCARIOS ---
+
+if pode_depositos:
+    criar_separador(scrollable, "DEPOSITOS BANCARIOS", "#0891b2")
+    linha_dep = criar_linha_botoes(scrollable)
+    CardBotao(linha_dep, "Depositos", "Registar deposito", "Ctrl+D",
+               "#0891b2",
+               lambda: abrir_depositos(utilizador, root)
+               ).grid(row=0, column=0, padx=5)
+
+
+# --- CADASTROS ---
 
 if pode_produtos_cadastrar or pode_produtos_gestao or pode_fornecedores or pode_clientes or pode_categorias:
     itens = []
@@ -1135,9 +1118,7 @@ if pode_produtos_cadastrar or pode_produtos_gestao or pode_fornecedores or pode_
         col += 1
 
 
-# ============================================================
-# ============ ESTOQUE =======================================
-# ============================================================
+# --- ESTOQUE ---
 
 if pode_listar_produtos or pode_validade or pode_estoque_baixo or pode_inventario or pode_fefo:
     itens = []
@@ -1181,9 +1162,7 @@ if pode_listar_produtos or pode_validade or pode_estoque_baixo or pode_inventari
         col += 1
 
 
-# ============================================================
-# ============ ANALISE =======================================
-# ============================================================
+# --- ANALISE ---
 
 if pode_relatorios or pode_historico_vendas or pode_perdas or pode_backup:
     itens = []
@@ -1226,9 +1205,7 @@ if pode_relatorios or pode_historico_vendas or pode_perdas or pode_backup:
         col += 1
 
 
-# ============================================================
-# ============ IA ============================================
-# ============================================================
+# --- IA ---
 
 if PERFIL in ("admin", "gerente"):
     criar_separador(scrollable, "INTELIGENCIA ARTIFICIAL", COR_ROXO_CLARO)
@@ -1239,9 +1216,7 @@ if PERFIL in ("admin", "gerente"):
                ).grid(row=0, column=0, padx=5)
 
 
-# ============================================================
-# ============ NUVEM =========================================
-# ============================================================
+# --- NUVEM ---
 
 if pode_sincronizar or pode_ver_fila:
     itens = []
@@ -1264,9 +1239,7 @@ if pode_sincronizar or pode_ver_fila:
         col += 1
 
 
-# ============================================================
-# ============ TRANSFERENCIAS ENTRE FILIAIS (IBT) ============
-# ============================================================
+# --- TRANSFERENCIAS ENTRE FILIAIS ---
 
 pode_transferencias = (PERFIL in ("admin", "gerente") or
                         tem_permissao(PERFIL, "transferencias.ver"))
@@ -1281,9 +1254,8 @@ if pode_transferencias:
                lambda: abrir_transferencias(utilizador, root)
                ).grid(row=0, column=0, padx=5)
 
-# ============================================================
-# ============ ADMINISTRACAO =================================
-# ============================================================
+
+# --- ADMINISTRACAO ---
 
 if pode_auditoria or pode_utilizadores or pode_config_farmacia:
     itens = []
@@ -1314,7 +1286,7 @@ if pode_auditoria or pode_utilizadores or pode_config_farmacia:
 
 
 # ============================================================
-# ============ RODAPE ========================================
+# RODAPE
 # ============================================================
 
 rodape = Frame(root, bg=COR_CARD, height=50)
@@ -1324,7 +1296,6 @@ rodape.pack_propagate(False)
 linha_rodape = Frame(rodape, bg=COR_DOURADO, height=2)
 linha_rodape.pack(fill=X)
 
-# Container interno do rodapé
 rodape_inner = Frame(rodape, bg=COR_CARD)
 rodape_inner.pack(fill=BOTH, expand=True)
 
@@ -1332,7 +1303,6 @@ estado_label = Label(rodape_inner, text="...", font=("Segoe UI", 10, "bold"),
                        bg=COR_CARD, fg=COR_ALERTA)
 estado_label.pack(side=LEFT, padx=20, pady=15)
 
-# Versão no rodapé
 Label(rodape_inner, text=f"JAM Soft v{obter_versao()}",
       font=("Segoe UI", 9), bg=COR_CARD, fg=COR_TEXTO_SEC).pack(
           side=LEFT, padx=(0, 10), pady=15)
@@ -1430,8 +1400,11 @@ elif pode_inventario:
     root.bind('<F10>', lambda e: com_permissao("inventario.listar", abrir_inventario, utilizador)())
 if pode_backup:
     root.bind('<F11>', lambda e: com_permissao("backup.listar", abrir_backup, utilizador)())
+if pode_depositos:
+    root.bind('<Control-d>', lambda e: abrir_depositos(utilizador, root))
 
 root.bind('<F12>', lambda e: sair_sistema())
+
 
 def _fechar_ultima(event=None):
     try:
@@ -1442,13 +1415,12 @@ def _fechar_ultima(event=None):
     except Exception:
         pass
 
+
 root.bind('<Escape>', _fechar_ultima)
 
 iniciar_auto_sync(callback=ao_sincronizar_auto)
 
-# ══════════════════════════════════════════════════════
-# MONITOR DE INACTIVIDADE
-# ══════════════════════════════════════════════════════
+# --- MONITOR DE INACTIVIDADE ---
 try:
     from monitor_inatividade import MonitorInatividade
     from database import obter_config_financeira
