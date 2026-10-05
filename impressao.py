@@ -1132,3 +1132,314 @@ def abrir_impressao(utilizador_logado):
            command=ver_impressoras, **estilo).grid(row=1, column=1, padx=5, pady=5)
     Button(frame_btn, text="Actualizar Lista", bg="#4b5563",
            command=carregar, **estilo).grid(row=2, column=0, padx=5, pady=5)
+
+    
+
+# ============================================================
+# ============ COMPROVATIVO DE DEPOSITO ======================
+# ============================================================
+
+def gerar_pdf_comprovativo_deposito(deposito_id, formato="A4", caminho_saida=None):
+    """
+    Gera o PDF do comprovativo de deposito bancario.
+    formato: "A4" ou "TERMICA"
+    """
+    try:
+        from reportlab.lib.pagesizes import A4
+        from reportlab.lib.units import mm
+        from reportlab.pdfgen import canvas as pdf_canvas
+    except ImportError:
+        return None, "reportlab nao instalado."
+
+    # ─── Buscar deposito ───
+    from database import obter_deposito, obter_empresa
+
+    d = obter_deposito(deposito_id)
+    if not d:
+        return None, "Deposito nao encontrado."
+
+    # Ordem: id, referencia, data, hora, valor, banco, comp, obs,
+    #        turno_id, ger_id, ger_nome, estado, aprov_por,
+    #        data_aprov, criado_em, uuid, terminal_id, farmacia_id, sincronizado
+    (did, referencia, data, hora, valor, banco, comp, obs,
+     turno_id, ger_id, ger_nome, estado, aprov_por,
+     data_aprov, criado_em) = d[:15]
+
+    # ─── Empresa ───
+    emp = obter_empresa()
+    emp_nome = emp[1] if emp else "Farmacia"
+    emp_nif = emp[2] if emp else "-"
+    emp_end = emp[3] if emp else "-"
+    emp_tel = emp[4] if emp else "-"
+    emp_email = emp[5] if emp else "-"
+
+    # ─── Logo ───
+    logo_path = None
+    try:
+        from pathlib import Path
+        lp = Path(__file__).parent / "logos" / "logo_horizontal_medio.png"
+        if lp.exists():
+            logo_path = str(lp)
+    except Exception:
+        pass
+
+    garantir_pasta()
+
+    if not caminho_saida:
+        nome_seguro = referencia.replace("/", "_").replace(" ", "_")
+        caminho_saida = os.path.join(PASTA_FACTURAS, f"Comprovativo_{nome_seguro}.pdf")
+
+    # ─── Configuracao de pagina ───
+    if formato == "TERMICA":
+        altura = 200 * mm
+        page_size = (80 * mm, altura)
+    else:
+        page_size = A4
+
+    c = pdf_canvas.Canvas(caminho_saida, pagesize=page_size)
+    largura, altura = page_size
+
+    y = altura - 15 * mm
+
+    # ══════════════════════════════════════════════════════
+    # ============ FORMATO TERMICA (80mm) ============
+    # ══════════════════════════════════════════════════════
+    if formato == "TERMICA":
+        # Logo
+        if logo_path and os.path.exists(logo_path):
+            try:
+                from reportlab.lib.utils import ImageReader
+                logo_img = ImageReader(logo_path)
+                logo_w = 40 * mm
+                logo_h = 15 * mm
+                c.drawImage(logo_img, (largura - logo_w) / 2, y - logo_h,
+                             width=logo_w, height=logo_h,
+                             preserveAspectRatio=True, mask='auto')
+                y -= logo_h + 3 * mm
+            except Exception:
+                pass
+
+        # Cabecalho
+        c.setFont("Helvetica-Bold", 11)
+        c.drawCentredString(largura / 2, y, emp_nome[:30])
+        y -= 4 * mm
+        c.setFont("Helvetica", 7)
+        c.drawCentredString(largura / 2, y, f"NIF: {emp_nif}")
+        y -= 3.5 * mm
+        c.drawCentredString(largura / 2, y, emp_end[:40])
+        y -= 3.5 * mm
+        c.drawCentredString(largura / 2, y, f"Tel: {emp_tel}")
+        y -= 5 * mm
+
+        c.drawCentredString(largura / 2, y, "=" * 40)
+        y -= 5 * mm
+
+        # Titulo
+        c.setFont("Helvetica-Bold", 10)
+        c.drawCentredString(largura / 2, y, "COMPROVATIVO DE DEPOSITO")
+        y -= 6 * mm
+
+        # Referencia destacada
+        c.setFont("Helvetica-Bold", 12)
+        c.drawCentredString(largura / 2, y, referencia)
+        y -= 6 * mm
+
+        c.drawCentredString(largura / 2, y, "-" * 40)
+        y -= 5 * mm
+
+        # Dados
+        c.setFont("Helvetica", 8)
+        c.drawString(4 * mm, y, "Data:")
+        c.drawRightString(largura - 4 * mm, y, f"{data} {hora}")
+        y -= 4 * mm
+
+        c.drawString(4 * mm, y, "Banco:")
+        c.drawRightString(largura - 4 * mm, y, str(banco or "-"))
+        y -= 4 * mm
+
+        if comp:
+            c.drawString(4 * mm, y, "Comprovante:")
+            c.drawRightString(largura - 4 * mm, y, str(comp))
+            y -= 4 * mm
+
+        c.drawString(4 * mm, y, "Gerente:")
+        c.drawRightString(largura - 4 * mm, y, str(ger_nome or "-")[:20])
+        y -= 4 * mm
+
+        c.drawString(4 * mm, y, "Estado:")
+        c.drawRightString(largura - 4 * mm, y, str(estado or "-"))
+        y -= 5 * mm
+
+        c.drawCentredString(largura / 2, y, "-" * 40)
+        y -= 5 * mm
+
+        # Valor em destaque
+        c.setFont("Helvetica-Bold", 11)
+        c.drawString(4 * mm, y, "VALOR:")
+        c.drawRightString(largura - 4 * mm, y, formatar_kz(valor))
+        y -= 8 * mm
+
+        # Aviso importante
+        c.setFont("Helvetica-Bold", 7)
+        c.drawCentredString(largura / 2, y, "IMPORTANTE:")
+        y -= 3.5 * mm
+        c.setFont("Helvetica", 6.5)
+        c.drawCentredString(largura / 2, y, "Ao depositar no banco, escreva")
+        y -= 3 * mm
+        c.drawCentredString(largura / 2, y, "a referencia na descricao:")
+        y -= 4 * mm
+        c.setFont("Helvetica-Bold", 8)
+        c.drawCentredString(largura / 2, y, referencia)
+        y -= 8 * mm
+
+        if obs:
+            c.setFont("Helvetica-Oblique", 6.5)
+            c.drawCentredString(largura / 2, y, f"Obs: {obs[:40]}")
+            y -= 6 * mm
+
+        c.setFont("Helvetica", 6.5)
+        c.drawCentredString(largura / 2, y, "-" * 40)
+        y -= 5 * mm
+        c.drawCentredString(largura / 2, y, "Assinatura do gerente:")
+        y -= 8 * mm
+        c.drawCentredString(largura / 2, y, "_" * 30)
+        y -= 6 * mm
+
+        c.setFont("Helvetica", 5.5)
+        c.drawCentredString(largura / 2, y, "JAM Soft © 2026")
+
+    # ══════════════════════════════════════════════════════
+    # ============ FORMATO A4 ============
+    # ══════════════════════════════════════════════════════
+    else:
+        # Logo horizontal
+        if logo_path and os.path.exists(logo_path):
+            try:
+                from reportlab.lib.utils import ImageReader
+                logo_img = ImageReader(logo_path)
+                logo_w = 70 * mm
+                logo_h = 22 * mm
+                c.drawImage(logo_img, (largura - logo_w) / 2, y - logo_h,
+                             width=logo_w, height=logo_h,
+                             preserveAspectRatio=True, mask='auto')
+                y -= logo_h + 5 * mm
+            except Exception:
+                pass
+        else:
+            c.setFont("Helvetica-Bold", 20)
+            c.drawCentredString(largura / 2, y, "JAM Soft")
+            y -= 8 * mm
+
+        # Linha roxa decorativa
+        c.setStrokeColorRGB(0.49, 0.23, 0.93)
+        c.setLineWidth(2)
+        c.line(20 * mm, y, largura - 20 * mm, y)
+        c.setStrokeColorRGB(0, 0, 0)
+        c.setLineWidth(1)
+        y -= 12 * mm
+
+        # Titulo
+        c.setFont("Helvetica-Bold", 16)
+        c.drawCentredString(largura / 2, y, "COMPROVATIVO DE DEPOSITO BANCARIO")
+        y -= 10 * mm
+
+        # Referencia grande
+        c.setFillColorRGB(0.49, 0.23, 0.93)
+        c.setFont("Helvetica-Bold", 22)
+        c.drawCentredString(largura / 2, y, referencia)
+        c.setFillColorRGB(0, 0, 0)
+        y -= 12 * mm
+
+        # Dados da farmacia
+        c.setFont("Helvetica-Bold", 12)
+        c.drawCentredString(largura / 2, y, emp_nome)
+        y -= 5 * mm
+        c.setFont("Helvetica", 10)
+        c.drawCentredString(largura / 2, y, f"NIF: {emp_nif}")
+        y -= 4.5 * mm
+        c.drawCentredString(largura / 2, y, emp_end)
+        y -= 4.5 * mm
+        c.drawCentredString(largura / 2, y, f"Tel: {emp_tel}  |  Email: {emp_email}")
+        y -= 15 * mm
+
+        # Caixa de dados do deposito
+        dados = [
+            ("Referencia:", referencia),
+            ("Data:", f"{data}  {hora}"),
+            ("Banco:", banco or "-"),
+            ("Numero do comprovante:", comp or "(nao preenchido)"),
+            ("Valor:", formatar_kz(valor)),
+            ("Gerente:", ger_nome or "-"),
+            ("Estado:", estado or "-"),
+        ]
+        if obs:
+            dados.append(("Observacoes:", obs))
+
+        # Desenhar tabela manual
+        linha_h = 10 * mm
+        col1_x = 25 * mm
+        col2_x = 75 * mm
+        tabela_y = y
+
+        for label, valor_txt in dados:
+            # Fundo cinza claro
+            c.setFillColorRGB(0.95, 0.96, 0.98)
+            c.rect(20 * mm, tabela_y - linha_h + 2 * mm, largura - 40 * mm,
+                    linha_h - 1 * mm, fill=1, stroke=0)
+            c.setFillColorRGB(0, 0, 0)
+
+            # Borda
+            c.setStrokeColorRGB(0.8, 0.8, 0.85)
+            c.rect(20 * mm, tabela_y - linha_h + 2 * mm, largura - 40 * mm,
+                    linha_h - 1 * mm, fill=0, stroke=1)
+            c.setStrokeColorRGB(0, 0, 0)
+
+            # Label
+            c.setFont("Helvetica-Bold", 10)
+            c.drawString(col1_x, tabela_y - linha_h + 5 * mm, label)
+
+            # Valor
+            c.setFont("Helvetica", 10)
+            c.drawString(col2_x, tabela_y - linha_h + 5 * mm, str(valor_txt))
+
+            tabela_y -= linha_h
+
+        y = tabela_y - 10 * mm
+
+        # Caixa de aviso (dourada)
+        c.setFillColorRGB(0.98, 0.75, 0.14)
+        c.rect(20 * mm, y - 30 * mm, largura - 40 * mm, 28 * mm, fill=1, stroke=0)
+        c.setFillColorRGB(0, 0, 0)
+
+        c.setFont("Helvetica-Bold", 11)
+        c.drawString(25 * mm, y - 8 * mm, "IMPORTANTE:")
+        c.setFont("Helvetica", 10)
+        c.drawString(25 * mm, y - 14 * mm,
+                     f"Ao depositar no banco, escreva a referencia abaixo na")
+        c.drawString(25 * mm, y - 19 * mm,
+                     f"descricao do deposito:")
+        c.setFont("Helvetica-Bold", 12)
+        c.drawString(25 * mm, y - 26 * mm, referencia)
+
+        y -= 40 * mm
+
+        # Assinatura
+        c.setFont("Helvetica", 10)
+        c.drawCentredString(largura / 2, y, "_" * 50)
+        y -= 6 * mm
+        c.setFont("Helvetica", 10)
+        c.drawCentredString(largura / 2, y,
+                             f"Assinatura do gerente: {ger_nome or '-'}")
+
+        # Rodape
+        c.setFont("Helvetica", 8)
+        c.setFillColorRGB(0.4, 0.4, 0.4)
+        agora = datetime.now().strftime("%d/%m/%Y as %H:%M")
+        c.drawCentredString(largura / 2, 25 * mm,
+                             f"Documento gerado em {agora} pela plataforma JAM Soft")
+        c.drawCentredString(largura / 2, 20 * mm,
+                             "Este documento nao substitui o comprovativo oficial do banco.")
+        c.setFillColorRGB(0, 0, 0)
+
+    c.save()
+    return caminho_saida, None

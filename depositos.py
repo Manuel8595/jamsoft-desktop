@@ -22,7 +22,7 @@ from database import (criar_deposito, listar_depositos, obter_deposito,
                        obter_config_financeira, registar_auditoria,
                        autenticar, listar_movimentos_saldo)
 from moeda import formatar_kz
-from comprovativo_deposito import gerar_comprovativo_deposito
+from impressao import gerar_pdf_comprovativo_deposito
 from seguranca import verificar_acesso
 
 
@@ -330,7 +330,13 @@ def construir_conteudo(content, utilizador_logado, janela, recarregar):
         dep_id = tree.item(sel[0])["values"][0]
         dialogo_detalhes(dep_id, utilizador_logado, janela, carregar)
 
-            # Imprimir Comprovativo
+    Button(frame_btn, text="👁️ Detalhes",
+           bg=COR_AZUL, width=18,
+           command=ver_detalhes,
+           **estilo_btn).pack(side=LEFT, padx=5, pady=8)
+
+
+    # Imprimir Comprovativo
     def imprimir_comprovativo():
         sel = tree.selection()
         if not sel:
@@ -339,71 +345,78 @@ def construir_conteudo(content, utilizador_logado, janela, recarregar):
 
         dep_id = tree.item(sel[0])["values"][0]
 
-        # Buscar dados completos
-        dep = obter_deposito(dep_id)
-        if not dep:
-            messagebox.showerror("Erro", "Deposito nao encontrado.")
-            return
+        # Perguntar formato
+        formato_win = Toplevel(janela)
+        formato_win.title("Formato de Impressao")
+        formato_win.geometry("400x300")
+        formato_win.configure(bg=COR_FUNDO)
+        formato_win.transient(janela)
+        formato_win.grab_set()
 
-        # dep = (id, referencia, data, hora, valor, banco, comp, obs,
-        #        turno_id, ger_id, ger_nome, estado, aprov_por, data_aprov, criado_em)
-        deposito_dict = {
-            "referencia": dep[1],
-            "data": dep[2],
-            "hora": dep[3],
-            "valor": dep[4],
-            "banco": dep[5],
-            "numero_comprovante": dep[6],
-            "observacoes": dep[7],
-            "gerente_nome": dep[10],
-            "estado": dep[11],
-        }
+        formato_win.update_idletasks()
+        x = (formato_win.winfo_screenwidth() - 400) // 2
+        y = (formato_win.winfo_screenheight() - 300) // 2
+        formato_win.geometry(f"400x300+{x}+{y}")
 
-        # Buscar info da farmácia
-        try:
-            from database import conectar
-            conn = conectar()
-            cur = conn.cursor()
-            cur.execute("SELECT nome, nif, endereco, telefone FROM empresa LIMIT 1")
-            emp = cur.fetchone()
-            conn.close()
+        header_f = Frame(formato_win, bg=COR_PRIMARIA, height=60)
+        header_f.pack(fill=X)
+        header_f.pack_propagate(False)
+        Label(header_f, text="IMPRIMIR COMPROVATIVO",
+              font=("Segoe UI", 14, "bold"),
+              bg=COR_PRIMARIA, fg="white").pack(pady=15)
 
-            if emp:
-                farmacia_dict = {
-                    "nome": emp[0],
-                    "nif": emp[1],
-                    "endereco": emp[2],
-                    "telefone": emp[3],
-                }
-            else:
-                farmacia_dict = None
-        except Exception:
-            farmacia_dict = None
+        corpo_f = Frame(formato_win, bg=COR_FUNDO)
+        corpo_f.pack(fill=BOTH, expand=True, padx=20, pady=15)
 
-        try:
-            caminho = gerar_comprovativo_deposito(deposito_dict, farmacia_dict)
+        Label(corpo_f, text="Escolha o formato:",
+              font=("Segoe UI", 11, "bold"),
+              bg=COR_FUNDO, fg=COR_TEXTO).pack(pady=(5, 15))
 
-            # Abrir automaticamente o PDF
-            import os
-            os.startfile(caminho)
+        def imprimir(formato):
+            formato_win.destroy()
+            try:
+                from impressao import gerar_pdf_comprovativo_deposito
+                caminho, erro = gerar_pdf_comprovativo_deposito(
+                    dep_id, formato=formato
+                )
+                if erro:
+                    messagebox.showerror("Erro", erro)
+                    return
 
-            registar_auditoria(
-                utilizador_logado["id"], utilizador_logado["nome"],
-                "IMPRIMIR COMPROVATIVO",
-                f"{dep[1]} | {formatar_kz(dep[4])}"
-            )
-        except Exception as e:
-            messagebox.showerror("Erro", f"Erro ao gerar PDF: {e}")
+                import os
+                os.startfile(caminho)
+
+                registar_auditoria(
+                    utilizador_logado["id"], utilizador_logado["nome"],
+                    "IMPRIMIR COMPROVATIVO",
+                    f"Deposito {dep_id} | Formato: {formato}"
+                )
+            except Exception as e:
+                messagebox.showerror("Erro", f"Erro ao gerar PDF: {e}")
+
+        Button(corpo_f, text="🖨️  A4 (Escritorio)",
+               font=("Segoe UI", 12, "bold"),
+               bg=COR_AZUL, fg="white",
+               width=25, height=2, bd=0, cursor="hand2",
+               command=lambda: imprimir("A4")).pack(pady=5)
+
+        Button(corpo_f, text="🧾  Termica 80mm (Caixa)",
+               font=("Segoe UI", 12, "bold"),
+               bg=COR_VERDE, fg="white",
+               width=25, height=2, bd=0, cursor="hand2",
+               command=lambda: imprimir("TERMICA")).pack(pady=5)
+
+        Button(corpo_f, text="❌ Cancelar",
+               font=("Segoe UI", 10),
+               bg="#64748b", fg="white",
+               width=25, height=1, bd=0, cursor="hand2",
+               command=formato_win.destroy).pack(pady=(10, 0))
 
     Button(frame_btn, text="🖨️ Imprimir",
            bg=COR_ROXO, width=18,
            command=imprimir_comprovativo,
            **estilo_btn).pack(side=LEFT, padx=5, pady=8)
-    
-    Button(frame_btn, text="👁️ Detalhes",
-           bg=COR_AZUL, width=18,
-           command=ver_detalhes,
-           **estilo_btn).pack(side=LEFT, padx=5, pady=8)
+
     
     # Aprovar (só admin)
     if utilizador_logado["perfil"] == "admin":
