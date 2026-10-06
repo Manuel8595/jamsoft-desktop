@@ -3687,14 +3687,16 @@ def criar_deposito(valor, banco, numero_comprovante, observacoes,
     estado = "PENDENTE_APROVACAO" if precisa_aprovacao else "REGISTADO"
     referencia = gerar_referencia_deposito()
 
+    # Se nao tem numero de comprovante, usar placeholder
+    if not numero_comprovante or not numero_comprovante.strip():
+        numero_comprovante = "A DEFINIR"
+
     conn = conectar()
     cur = conn.cursor()
     agora = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-    # Gerar UUID para sincronizacao
     uid = str(_uuid.uuid4())
 
-    # Buscar farmacia_id local
     try:
         from identidade import obter_farmacia_id, obter_terminal_codigo
         farm_id = obter_farmacia_id()
@@ -3764,6 +3766,93 @@ def aprovar_deposito(deposito_id, admin_nome):
     
     return True
 
+def registar_no_banco(deposito_id, numero_comprovante, data_banco, observacoes=""):
+    """
+    Marca um depósito como registado no banco.
+    Muda o estado para AGUARDA_CONFIRMACAO.
+    """
+    conn = conectar()
+    cur = conn.cursor()
+
+    # Verificar estado actual
+    cur.execute("SELECT estado, referencia FROM depositos WHERE id = ?",
+                  (deposito_id,))
+    r = cur.fetchone()
+
+    if not r:
+        conn.close()
+        return False, "Deposito nao encontrado."
+
+    estado_atual, referencia = r
+
+    if estado_atual != "REGISTADO":
+        conn.close()
+        return False, (f"BLOQUEADO: Estado actual ({estado_atual}) nao permite "
+                        f"registar no banco. Apenas depositos REGISTADOS podem "
+                        f"ser editados.")
+
+    agora = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+    cur.execute("""
+        UPDATE depositos
+        SET numero_comprovante = ?,
+            data = ?,
+            observacoes = ?,
+            estado = 'AGUARDA_CONFIRMACAO',
+            sincronizado = 0,
+            atualizado_em = ?
+        WHERE id = ?
+    """, (numero_comprovante, data_banco, observacoes, agora, deposito_id))
+
+    conn.commit()
+    conn.close()
+
+    return True, f"Deposito {referencia} registado no banco."
+
+
+def registar_no_banco_completo(deposito_id, valor, banco, numero_comprovante,
+                                 data_banco, observacoes=""):
+    """Edita completamente um deposito em REGISTADO."""
+    # Validar numero_comprovante
+    if not numero_comprovante or not numero_comprovante.strip():
+        return False, "O numero do comprovante e obrigatorio."
+    if numero_comprovante.strip() == "A DEFINIR":
+        return False, "Substitui 'A DEFINIR' pelo numero real do comprovante."
+
+    conn = conectar()
+    cur = conn.cursor()
+
+    cur.execute("SELECT estado, referencia FROM depositos WHERE id = ?",
+                  (deposito_id,))
+    r = cur.fetchone()
+
+    if not r:
+        conn.close()
+        return False, "Deposito nao encontrado."
+
+    estado_atual, referencia = r
+
+    if estado_atual != "REGISTADO":
+        conn.close()
+        return False, f"BLOQUEADO: Estado actual ({estado_atual}) nao permite editar."
+
+    cur.execute("""
+        UPDATE depositos
+        SET valor = ?,
+            banco = ?,
+            numero_comprovante = ?,
+            data = ?,
+            observacoes = ?,
+            estado = 'AGUARDA_CONFIRMACAO',
+            sincronizado = 0
+        WHERE id = ?
+    """, (valor, banco, numero_comprovante.strip(), data_banco, observacoes,
+          deposito_id))
+
+    conn.commit()
+    conn.close()
+
+    return True, f"Deposito {referencia} registado no banco."
 
 def cancelar_deposito(deposito_id, motivo, admin_nome):
     conn = conectar()
@@ -4197,7 +4286,7 @@ def definir_orcamento_mes(mes, orcamento, definido_por, observacoes=""):
         cur.execute("""
             UPDATE metas_farmacia 
             SET orcamento_mes = ?, observacoes = ?, 
-                definido_por = ?, atualizado_em = ?
+    
             WHERE mes = ?
         """, (orcamento, observacoes, definido_por, agora, mes))
     else:

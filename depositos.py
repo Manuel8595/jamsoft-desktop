@@ -416,8 +416,29 @@ def construir_conteudo(content, utilizador_logado, janela, recarregar):
            bg=COR_ROXO, width=18,
            command=imprimir_comprovativo,
            **estilo_btn).pack(side=LEFT, padx=5, pady=8)
+        # Editar (só se estado = REGISTADO)
+    def editar_deposito():
+        sel = tree.selection()
+        if not sel:
+            messagebox.showwarning("Aviso", "Selecione um deposito.")
+            return
 
-    
+        estado = tree.item(sel[0])["values"][8]
+        if estado != "REGISTADO":
+            messagebox.showinfo("Bloqueado",
+                f"Este deposito esta em '{estado}' e ja nao pode ser editado.\n\n"
+                "Apenas depositos REGISTADOS podem ser editados.")
+            return
+
+        dep_id = tree.item(sel[0])["values"][0]
+        dialogo_editar_deposito(dep_id, utilizador_logado, janela, carregar)
+
+    Button(frame_btn, text="🖊️ Editar",
+           bg="#f59e0b", width=18,
+           command=editar_deposito,
+           **estilo_btn).pack(side=LEFT, padx=5, pady=8)
+
+
     # Aprovar (só admin)
     if utilizador_logado["perfil"] == "admin":
         def aprovar():
@@ -858,3 +879,203 @@ if __name__ == "__main__":
         print("    (nenhum)")
     
     print("\n" + "="*60 + "\n")
+
+    
+
+# ============================================================
+# ============ EDITAR DEPOSITO (REGISTAR NO BANCO) ===========
+# ============================================================
+
+def dialogo_editar_deposito(dep_id, utilizador_logado, parent, callback=None):
+    """Edita um deposito REGISTADO e regista no banco."""
+    from database import obter_deposito, listar_bancos_ativos, registar_no_banco_completo
+
+    d = obter_deposito(dep_id)
+    if not d:
+        messagebox.showerror("Erro", "Deposito nao encontrado.")
+        return
+
+    # Ordem: id, referencia, data, hora, valor, banco, comp, obs,
+    #        turno_id, ger_id, ger_nome, estado, aprov_por,
+    #        data_aprov, criado_em
+    (did, referencia, data_atual, hora, valor_atual, banco_atual, comp_atual,
+     obs_atual, turno_id, ger_id, ger_nome, estado_atual) = d[:12]
+
+    if estado_atual != "REGISTADO":
+        messagebox.showinfo("Bloqueado",
+            f"Este deposito esta em '{estado_atual}' e nao pode ser editado.")
+        return
+
+    janela = Toplevel(parent)
+    janela.title(f"Editar {referencia}")
+    janela.geometry("600x820")
+    janela.configure(bg=COR_FUNDO)
+    janela.transient(parent)
+    janela.grab_set()
+
+    janela.update_idletasks()
+    x = (janela.winfo_screenwidth() - 600) // 2
+    y = max(20, (janela.winfo_screenheight() - 820) // 2)
+    janela.geometry(f"600x820+{x}+{y}")
+
+    # Header
+    header = Frame(janela, bg=COR_ALERTA, height=70)
+    header.pack(fill=X)
+    header.pack_propagate(False)
+    Label(header, text=f"🖊️ Editar Deposito",
+          font=("Segoe UI", 16, "bold"),
+          bg=COR_ALERTA, fg="white").pack(pady=(12, 0))
+    Label(header, text=referencia,
+          font=("Segoe UI", 11, "italic"),
+          bg=COR_ALERTA, fg="#fff7ed").pack()
+
+    # Aviso
+    aviso = Frame(janela, bg=COR_CARD, highlightthickness=1,
+                   highlightbackground=COR_DOURADO)
+    aviso.pack(fill=X, padx=20, pady=15)
+    Label(aviso,
+          text="⚠️ Preenche os dados do banco.\n"
+               "Ao guardar, o deposito fica pendente de aprovacao do CEO.",
+          font=("Segoe UI", 10, "italic"),
+          bg=COR_CARD, fg=COR_DOURADO,
+          justify=CENTER).pack(pady=10)
+
+    # Formulario
+    frame = Frame(janela, bg=COR_CARD, highlightthickness=1,
+                   highlightbackground=COR_BORDA)
+    frame.pack(padx=20, pady=10, fill=X)
+
+    inner = Frame(frame, bg=COR_CARD)
+    inner.pack(padx=25, pady=20, fill=X)
+
+    # Valor
+    Label(inner, text="Valor depositado (Kz): *",
+          font=("Segoe UI", 11, "bold"),
+          bg=COR_CARD, fg=COR_TEXTO).pack(anchor=W, pady=(5, 3))
+    e_valor = Entry(inner, font=("Segoe UI", 13), bd=1, relief=SOLID, justify=CENTER)
+    e_valor.insert(0, str(int(valor_atual)))
+    e_valor.pack(fill=X, ipady=8)
+
+    # Banco
+    Label(inner, text="Banco: *",
+          font=("Segoe UI", 11, "bold"),
+          bg=COR_CARD, fg=COR_TEXTO).pack(anchor=W, pady=(15, 3))
+    bancos = listar_bancos_ativos()
+    banco_var = StringVar(value=banco_atual if banco_atual in bancos else (bancos[0] if bancos else "BAI"))
+    combo_banco = ttk.Combobox(inner, textvariable=banco_var,
+                                 values=bancos, state="readonly",
+                                 font=("Segoe UI", 11))
+    combo_banco.pack(fill=X, ipady=5)
+
+    # Numero do comprovante
+    Label(inner, text="Numero do comprovante (banco): *",
+          font=("Segoe UI", 11, "bold"),
+          bg=COR_CARD, fg=COR_TEXTO).pack(anchor=W, pady=(15, 3))
+    e_comp = Entry(inner, font=("Segoe UI", 12), bd=1, relief=SOLID)
+    if comp_atual and comp_atual != "A DEFINIR":
+        e_comp.insert(0, comp_atual)
+    e_comp.pack(fill=X, ipady=6)
+    Label(inner, text="Numero impresso no comprovante do banco",
+          font=("Segoe UI", 9, "italic"),
+          bg=COR_CARD, fg=COR_TEXTO_SEC).pack(anchor=W, pady=(3, 10))
+
+    # Data do deposito no banco
+    Label(inner, text="Data real do deposito no banco: *",
+          font=("Segoe UI", 11, "bold"),
+          bg=COR_CARD, fg=COR_TEXTO).pack(anchor=W, pady=(5, 3))
+    e_data = Entry(inner, font=("Segoe UI", 12), bd=1, relief=SOLID)
+    e_data.insert(0, datetime.now().strftime("%Y-%m-%d"))
+    e_data.pack(fill=X, ipady=6)
+    Label(inner, text="Formato: AAAA-MM-DD (ex: 2026-10-05)",
+          font=("Segoe UI", 9, "italic"),
+          bg=COR_CARD, fg=COR_TEXTO_SEC).pack(anchor=W, pady=(3, 10))
+
+    # Observacoes
+    Label(inner, text="Observacoes (opcional):",
+          font=("Segoe UI", 11, "bold"),
+          bg=COR_CARD, fg=COR_TEXTO).pack(anchor=W, pady=(5, 3))
+    text_obs = Text(inner, height=3, font=("Segoe UI", 11), bd=1, relief=SOLID)
+    if obs_atual:
+        text_obs.insert("1.0", obs_atual)
+    text_obs.pack(fill=X)
+
+    # Botoes
+    def confirmar():
+        valor_txt = e_valor.get().replace(".", "").replace(",", ".").strip()
+        try:
+            valor = float(valor_txt)
+            if valor <= 0:
+                raise ValueError
+        except ValueError:
+            messagebox.showwarning("Aviso", "Valor invalido.")
+            return
+
+        banco = banco_var.get().strip()
+        if not banco:
+            messagebox.showwarning("Aviso", "Escolha o banco.")
+            return
+
+        comp = e_comp.get().strip()
+        if not comp:
+            messagebox.showwarning("Aviso", "O numero do comprovante e obrigatorio.")
+            return
+
+        if comp == "A DEFINIR":
+            messagebox.showwarning("Aviso", "Substitui 'A DEFINIR' pelo numero real.")
+            return
+
+        data_banco = e_data.get().strip()
+        try:
+            datetime.strptime(data_banco, "%Y-%m-%d")
+        except ValueError:
+            messagebox.showwarning("Aviso", "Data invalida. Use AAAA-MM-DD.")
+            return
+
+        obs = text_obs.get("1.0", END).strip()
+
+        # Confirmar
+        if not messagebox.askyesno("Confirmar",
+            f"Guardar e marcar como AGUARDA CONFIRMACAO?\n\n"
+            f"Valor: {formatar_kz(valor)}\n"
+            f"Banco: {banco}\n"
+            f"Comprovante: {comp}\n"
+            f"Data: {data_banco}\n\n"
+            f"Apos isto, o deposito nao pode ser editado."
+        ):
+            return
+
+        # Registar no banco
+        ok, msg = registar_no_banco_completo(
+            dep_id, valor, banco, comp, data_banco, obs
+        )
+
+        if ok:
+            registar_auditoria(
+                utilizador_logado["id"], utilizador_logado["nome"],
+                "EDITAR DEPOSITO",
+                f"{referencia} | {formatar_kz(valor)} | Comp: {comp}"
+            )
+            messagebox.showinfo("Sucesso",
+                f"Deposito atualizado!\n\n{msg}\n\n"
+                f"Estado: AGUARDA_CONFIRMACAO\n"
+                f"Aguarda confirmacao do CEO.")
+            janela.destroy()
+            if callback:
+                callback()
+        else:
+            messagebox.showerror("Erro", msg)
+
+    frame_btn = Frame(janela, bg=COR_FUNDO)
+    frame_btn.pack(pady=15)
+
+    Button(frame_btn, text="💾 Guardar e Enviar",
+           font=("Segoe UI", 12, "bold"),
+           bg=COR_VERDE, fg="white",
+           width=22, height=2, bd=0, cursor="hand2",
+           command=confirmar).pack(side=LEFT, padx=5)
+
+    Button(frame_btn, text="❌ Cancelar",
+           font=("Segoe UI", 11),
+           bg="#64748b", fg="white",
+           width=15, height=2, bd=0, cursor="hand2",
+           command=janela.destroy).pack(side=LEFT, padx=5)
