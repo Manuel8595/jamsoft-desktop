@@ -208,45 +208,77 @@ def abrir_dashboard(utilizador_logado):
     cards_frame.pack(fill=X, padx=20, pady=15)
     
     def criar_card(parent, titulo, valor, cor, subtitulo="", coluna=0, linha=0):
-        card = Frame(parent, bg=COR_CARD, highlightthickness=2, highlightbackground=cor)
+        card = Frame(parent, bg=COR_CARD, highlightthickness=2, highlightbackground=cor, cursor="hand2")
         card.grid(row=linha, column=coluna, padx=8, pady=5, sticky="nsew")
         parent.columnconfigure(coluna, weight=1)
         
-        Label(card, text=titulo, font=("Arial", 10, "bold"),
-              bg=COR_CARD, fg="#6b7280").pack(pady=(15, 3))
-        Label(card, text=valor, font=("Arial", 20, "bold"),
-              bg=COR_CARD, fg=cor).pack()
+        lbl_titulo = Label(card, text=titulo, font=("Arial", 11, "bold"),
+              bg=COR_CARD, fg="#6b7280")
+        lbl_titulo.pack(pady=(15, 3))
+        lbl_valor = Label(card, text=valor, font=("Arial", 22, "bold"),
+              bg=COR_CARD, fg=cor)
+        lbl_valor.pack()
+        widgets_hover = [card, lbl_titulo, lbl_valor]
         if subtitulo:
-            Label(card, text=subtitulo, font=("Arial", 9, "italic"),
-                  bg=COR_CARD, fg="#6b7280").pack(pady=(3, 15))
+            lbl_sub = Label(card, text=subtitulo, font=("Arial", 9, "italic"),
+                  bg=COR_CARD, fg="#6b7280")
+            lbl_sub.pack(pady=(3, 15))
+            widgets_hover.append(lbl_sub)
         else:
-            Label(card, text="", bg=COR_CARD).pack(pady=(0, 15))
+            lbl_vazio = Label(card, text="", bg=COR_CARD)
+            lbl_vazio.pack(pady=(0, 15))
+            widgets_hover.append(lbl_vazio)
+
+        # Ligar hover
+        def _enter(e, ws=widgets_hover, c=card, co=cor):
+            try:
+                c.configure(bg=co)
+                for w in ws:
+                    w.configure(bg=co)
+                ws[1].configure(fg="#e5e7eb")
+            except Exception:
+                pass
+
+        def _leave(e, ws=widgets_hover, c=card, co=cor):
+            try:
+                c.configure(bg=COR_CARD)
+                for w in ws:
+                    w.configure(bg=COR_CARD)
+                ws[1].configure(fg="#6b7280")
+                ws[2].configure(fg=co)
+            except Exception:
+                pass
+
+        for w in widgets_hover:
+            w.bind("<Enter>", _enter)
+            w.bind("<Leave>", _leave)
     
-    criar_card(cards_frame, "Vendas Hoje",
+
+    criar_card(cards_frame, "📈 Vendas Hoje",
                formatar_kz(dados["vendas_hoje_total"]),
                COR_VERDE,
                f"{dados['vendas_hoje_n']} vendas",
                0)
     
-    criar_card(cards_frame, "Vendas do Mês",
+    criar_card(cards_frame, "💵 Vendas do Mês",
                formatar_kz(dados["vendas_mes_total"]),
                COR_AZUL,
                f"{dados['vendas_mes_n']} vendas",
                1)
     
-    criar_card(cards_frame, "Ticket Médio",
+    criar_card(cards_frame, "🎯 Ticket Médio",
                formatar_kz(dados["ticket_medio"]),
                COR_ROXO,
                "por venda",
                2)
     
-    criar_card(cards_frame, "Valor do Stock",
+    criar_card(cards_frame, "📦 Valor do Stock",
                formatar_kz(dados["valor_estoque"]),
                COR_LARANJA,
                "preço de venda",
                3)
     
-    criar_card(cards_frame, "Facturas do Mês",
+    criar_card(cards_frame, "🧾 Facturas do Mês",
                str(dados["facturas_mes_n"]),
                COR_PRIMARIA,
                formatar_kz(dados["facturas_mes_total"]),
