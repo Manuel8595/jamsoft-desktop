@@ -156,16 +156,30 @@ def abrir_dashboard(utilizador_logado):
     janela.configure(bg=COR_FUNDO)
     
     # Header
-    header = Frame(janela, bg=COR_PRIMARIA, height=80)
+    header = Frame(janela, bg=COR_PRIMARIA, height=100)
     header.pack(fill=X)
     header.pack_propagate(False)
     
-    Label(header, text="📊 Dashboard - Visao Geral", font=("Arial", 20, "bold"),
-          bg=COR_PRIMARIA, fg="white").pack(pady=(15, 0))
+    try:
+        from PIL import Image, ImageTk
+        logo_img = Image.open("logos/JamLogo_transparente.png")
+        logo_img = logo_img.resize((80, 80), Image.LANCZOS)
+        logo_tk = ImageTk.PhotoImage(logo_img)
+        lbl_logo = Label(header, image=logo_tk, bg=COR_PRIMARIA)
+        lbl_logo.image = logo_tk
+        lbl_logo.pack(side=LEFT, padx=20, pady=10)
+    except Exception as e:
+        print(f"[AVISO] Logo nao carregado: {e}")
+    
+    texto_frame = Frame(header, bg=COR_PRIMARIA)
+    texto_frame.pack(side=LEFT, fill=BOTH, expand=True, pady=15)
+    
+    Label(texto_frame, text="📊 Dashboard - Visão Geral", font=("Arial", 20, "bold"),
+          bg=COR_PRIMARIA, fg="white").pack(anchor=W)
     
     data_hora = datetime.now().strftime("%d/%m/%Y - %H:%M")
-    Label(header, text=f"Atualizado em: {data_hora}  |  Utilizador: {utilizador_logado['nome']}",
-          font=("Arial", 10, "italic"), bg=COR_PRIMARIA, fg="#cbd5e1").pack()
+    Label(texto_frame, text=f"Atualizado em: {data_hora}  |  Utilizador: {utilizador_logado['nome']}",
+          font=("Arial", 10, "italic"), bg=COR_PRIMARIA, fg="#cbd5e1").pack(anchor=W)
 
         # ============================================================
     # ================= CARDS DE RESUMO (TOPO) ===================
@@ -195,13 +209,13 @@ def abrir_dashboard(utilizador_logado):
                f"{dados['vendas_hoje_n']} vendas",
                0)
     
-    criar_card(cards_frame, "Vendas do Mes",
+    criar_card(cards_frame, "Vendas do Mês",
                formatar_kz(dados["vendas_mes_total"]),
                COR_AZUL,
                f"{dados['vendas_mes_n']} vendas",
                1)
     
-    criar_card(cards_frame, "Ticket Medio",
+    criar_card(cards_frame, "Ticket Médio",
                formatar_kz(dados["ticket_medio"]),
                COR_ROXO,
                "por venda",
@@ -210,10 +224,10 @@ def abrir_dashboard(utilizador_logado):
     criar_card(cards_frame, "Valor do Stock",
                formatar_kz(dados["valor_estoque"]),
                COR_LARANJA,
-               "preco de venda",
+               "preço de venda",
                3)
     
-    criar_card(cards_frame, "Facturas do Mes",
+    criar_card(cards_frame, "Facturas do Mês",
                str(dados["facturas_mes_n"]),
                COR_PRIMARIA,
                formatar_kz(dados["facturas_mes_total"]),
@@ -250,7 +264,7 @@ def abrir_dashboard(utilizador_logado):
     if dados["a_vencer"] > 0:
         alerta = Frame(alertas_frame, bg="#fee2e2", highlightthickness=1, highlightbackground=COR_VERMELHO)
         alerta.pack(fill=X, pady=3)
-        Label(alerta, text=f"🚨 {dados['a_vencer']} lotes a vencer nos proximos 30 dias",
+        Label(alerta, text=f"🚨 {dados['a_vencer']} lotes a vencer nos próximos 30 dias",
               font=("Arial", 10, "bold"), bg="#fee2e2", fg=COR_VERMELHO).pack(pady=8, padx=15, anchor=W)
     
     # ============================================================
@@ -264,7 +278,7 @@ def abrir_dashboard(utilizador_logado):
     frame_graf1 = Frame(graficos_frame, bg=COR_CARD, highlightthickness=1, highlightbackground="#cbd5e1")
     frame_graf1.pack(side=LEFT, fill=BOTH, expand=True, padx=5)
     
-    Label(frame_graf1, text="📈 Vendas dos Ultimos 7 Dias", font=("Arial", 12, "bold"),
+    Label(frame_graf1, text="📈 Vendas dos Últimos 7 Dias", font=("Arial", 12, "bold"),
           bg=COR_CARD, fg=COR_TEXTO).pack(pady=10)
     
     try:
