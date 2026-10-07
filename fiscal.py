@@ -92,9 +92,10 @@ def abrir_fiscal(utilizador_logado):
            command=lambda: exportar_saft_janela(utilizador_logado, janela),
            **estilo).grid(row=1, column=1, padx=8, pady=8)
     
-    Button(frame_botoes, text="🔐 Configuração AGT", bg="#be185d",
-           command=lambda: abrir_config_agt(utilizador_logado, janela),
-           **estilo).grid(row=2, column=0, padx=8, pady=8)
+    if utilizador_logado.get("perfil") == "admin":
+        Button(frame_botoes, text="🔐 Configuração AGT", bg="#be185d",
+               command=lambda: abrir_config_agt(utilizador_logado, janela),
+               **estilo).grid(row=2, column=0, padx=8, pady=8)
 
 def configurar_empresa(utilizador_logado, parent):
     janela = Toplevel(parent)
@@ -834,11 +835,31 @@ def exportar_saft_janela(utilizador_logado, parent):
 
 def abrir_config_agt(utilizador_logado, parent):
     """Janela de Configuração AGT — número de validação + chave RSA."""
+    
+    # ─── VERIFICACAO DE SEGURANCA ───
+    if utilizador_logado.get("perfil") != "admin":
+        messagebox.showerror(
+            "Acesso Negado",
+            "Apenas o administrador pode aceder a Configuracao AGT.\n\n"
+            "Esta tentativa foi registada em auditoria."
+        )
+        try:
+            from database import registar_auditoria
+            registar_auditoria(
+                utilizador_logado.get("id", 0),
+                utilizador_logado.get("nome", "?"),
+                "TENTATIVA AGT BLOQUEADA",
+                f"Perfil: {utilizador_logado.get('perfil', '?')}"
+            )
+        except Exception:
+            pass
+        return
+
     from database import (obter_config_agt, guardar_config_agt,
                             desactivar_config_agt, tem_validacao_agt)
 
     janela = Toplevel(parent)
-    janela.title("Configuração AGT")
+    janela.title("Configuração AGT")    
     janela.geometry("650x700")
     janela.configure(bg=COR_FUNDO)
     janela.transient(parent)
