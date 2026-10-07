@@ -142,6 +142,25 @@ def obter_dados_dashboard():
     dados["facturas_mes_n"] = r[0] if r else 0
     dados["facturas_mes_total"] = r[1] if r else 0
     
+    # Clientes novos do mes
+    r = query_one("""
+        SELECT COUNT(*) FROM clientes
+        WHERE strftime('%Y-%m', criado_em) = ?
+    """, (mes_atual,))
+    dados["clientes_mes"] = r[0] if r else 0
+    
+    # Produtos com stock
+    r = query_one("SELECT COUNT(*) FROM produtos WHERE estoque_atual > 0")
+    dados["produtos_stock"] = r[0] if r else 0
+    
+    # Lucro potencial em stock
+    r = query_one("""
+        SELECT COALESCE(SUM((preco_venda - preco_custo) * estoque_atual), 0)
+        FROM produtos
+        WHERE estoque_atual > 0
+    """)
+    dados["lucro_potencial"] = r[0] if r else 0
+    
     return dados
 
 
@@ -188,9 +207,9 @@ def abrir_dashboard(utilizador_logado):
     cards_frame = Frame(janela, bg=COR_FUNDO)
     cards_frame.pack(fill=X, padx=20, pady=15)
     
-    def criar_card(parent, titulo, valor, cor, subtitulo="", coluna=0):
+    def criar_card(parent, titulo, valor, cor, subtitulo="", coluna=0, linha=0):
         card = Frame(parent, bg=COR_CARD, highlightthickness=2, highlightbackground=cor)
-        card.grid(row=0, column=coluna, padx=8, pady=5, sticky="nsew")
+        card.grid(row=linha, column=coluna, padx=8, pady=5, sticky="nsew")
         parent.columnconfigure(coluna, weight=1)
         
         Label(card, text=titulo, font=("Arial", 10, "bold"),
@@ -232,6 +251,24 @@ def abrir_dashboard(utilizador_logado):
                COR_PRIMARIA,
                formatar_kz(dados["facturas_mes_total"]),
                4)
+    
+    criar_card(cards_frame, "👥 Clientes do Mês",
+               str(dados["clientes_mes"]),
+               "#8b5cf6",
+               "novos clientes",
+               0, linha=1)
+    
+    criar_card(cards_frame, "📦 Produtos Stock",
+               str(dados["produtos_stock"]),
+               "#06b6d4",
+               "com stock",
+               1, linha=1)
+    
+    criar_card(cards_frame, "💰 Lucro Potencial",
+               formatar_kz(dados["lucro_potencial"]),
+               "#10b981",
+               "no stock actual",
+               2, linha=1)
     
     # ============================================================
     # ================= ALERTAS ==================================
