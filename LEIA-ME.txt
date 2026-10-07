@@ -1,20 +1,73 @@
-JAM SOFT — COMO INICIAR
+========================================
+JAM SOFT - LEIA-ME
+========================================
 
-1. Extraia a pasta farmacia-app do ZIP para uma pasta nova e vazia. Nao a
-   misture com uma copia antiga: um ficheiro .env antigo pode conservar
-   definicoes de ligacao a nuvem.
-2. Abra essa pasta e faça duplo clique em INICIAR_FARMACIA.bat.
-3. Na primeira utilização, o computador precisa de Internet para preparar os componentes. Aguarde até a janela da aplicação abrir.
-4. Nas próximas vezes, faça duplo clique no mesmo ficheiro. Não precisa de abrir o VS Code.
+Versão 1.0.2 - 07/10/2026
 
-O ficheiro farmacia.db, as facturas e os backups foram mantidos. O ZIP original não foi alterado.
+========================================
+INSTALAÇÃO (primeira vez)
+========================================
 
-A aplicação local está pronta para utilização sem sincronização com a nuvem. A sincronização e a plataforma online estão desligadas por segurança até as permissões do Supabase serem corrigidas. Não altere CLOUD_ACCESS_ENABLED nem SYNC_ENABLED para "true" antes de concluir essa correcção.
+1. Extrai esta pasta para:
+   C:\farmacia-app\
 
-Consulte COMO_PROTEGER_SUPABASE.txt para as instruções sobre a protecção da base de dados online. A aplicação local continua a funcionar enquanto esse passo não for feito.
+2. Duplo-clique em INSTALAR.bat
+   (aguarda 2-5 minutos)
 
-Consulte ESTADO_DO_PROJECTO.txt para ver o que foi corrigido, testado e quais os passos externos ainda necessários para a nuvem e a facturação oficial.
+3. Duplo-clique em INICIAR_FARMACIA.bat
 
-Este pacote não inclui as credenciais do Supabase. A sincronização está desligada, por isso não precisas de configurar esse serviço para usar a aplicação local.
+4. Faz login com as credenciais fornecidas
 
-Se aparecer um erro ao iniciar, tire uma fotografia da janela e peça ajuda antes de apagar ou substituir ficheiros.
+A partir de agora, a aplicação vai
+ABRIR AUTOMATICAMENTE sempre que ligares o PC.
+
+========================================
+USO DIÁRIO
+========================================
+
+1. Liga o PC
+2. A aplicação abre sozinha (espera 30 segundos)
+3. Faz login
+4. Trabalha normalmente
+
+Para fechar:
+  Menu -> Terminar Sessão
+
+========================================
+SE ALGO FALHAR
+========================================
+
+1. Internet em baixo?
+   -> A aplicação funciona offline
+   -> Sincroniza quando voltar
+
+2. Python nao encontrado?
+   -> Instala em: python.org/downloads
+   -> Marca "Add Python to PATH"
+
+3. Aplicação nao abre?
+   -> Duplo-clique em INICIAR_FARMACIA.bat
+   -> Se persistir, contacta suporte
+
+========================================
+DESINSTALAR
+========================================
+
+1. Duplo-clique em DESINSTALAR.bat
+   (remove o arranque automatico)
+
+2. Apaga a pasta C:\farmacia-app\
+   (opcional)
+
+AVISO: O ficheiro farmacia.db contém
+todos os teus dados. NUNCA o apagues
+sem fazer backup primeiro.
+
+========================================
+SUPORTE
+========================================
+
+Email: suporte@jamsoft.ao
+Telefone: +244 XXX XXX XXX
+
+========================================

@@ -17,14 +17,16 @@ INCLUIR_FICHEIROS = [
     "RESUMO_SISTEMA.md",
     "VERSION",
     "VERSION_HISTORY.md",
+    "DOCUMENTO_TECNICO_AGT.md",
     "requirements.txt",
     "INICIAR_FARMACIA.bat",
+    "INSTALAR.bat",
+    "DESINSTALAR.bat",
     ".gitignore",
 ]
 
 INCLUIR_PASTAS = [
     "logos",
-    "scripts",
 ]
 
 EXCLUIR_TERMOS = [
@@ -44,6 +46,15 @@ EXCLUIR_TERMOS = [
     "relatorios",
     ".git",
     "teste_",
+    "criar_pacote.py",
+    "criar_ico.py",
+    "gerar_logos.py",
+    "preparar_logos.py",
+    "gerar_pdf_manual.py",
+    "gerar_pdf_profissional.py",
+    "_verificar.py",
+    "corrigir_tudo.py",
+    "fix_botoes_topo.py",
 ]
 
 
@@ -62,7 +73,7 @@ def criar_pacote():
 
     print()
     print("=" * 60)
-    print(f"  CRIAR PACOTE — JAM Soft v{VERSAO}")
+    print(f"  CRIAR PACOTE - JAM Soft v{VERSAO}")
     print("=" * 60)
     print()
 
@@ -103,13 +114,12 @@ def criar_pacote():
 
     print()
     print("=" * 60)
-    print(f"  ✅ Pacote criado: {NOME_ZIP}")
-    print(f"     Ficheiros: {n_ficheiros}")
-    print(f"     Tamanho:   {tamanho_zip:.1f} MB")
+    print(f"  Pacote criado: {NOME_ZIP}")
+    print(f"  Ficheiros: {n_ficheiros}")
+    print(f"  Tamanho:   {tamanho_zip:.1f} MB")
     print("=" * 60)
     print()
 
 
 if __name__ == "__main__":
     criar_pacote()
-    
