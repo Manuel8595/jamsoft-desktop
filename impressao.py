@@ -135,6 +135,8 @@ def gerar_pdf_factura(factura_id, formato="A4", caminho_saida=None,
     logo_path = None
     if emp and len(emp) > 9:
         logo_path = emp[9]
+        if logo_path and not os.path.isabs(logo_path):
+            logo_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), logo_path)
 
     itens = obter_itens_factura_com_desconto(factura_id)
 
@@ -337,8 +339,10 @@ def gerar_pdf_factura(factura_id, formato="A4", caminho_saida=None,
                 c.drawImage(logo_img, 20 * mm, y - 22 * mm,
                              width=30 * mm, height=25 * mm,
                              preserveAspectRatio=True, mask='auto')
-            except Exception:
-                pass
+            except Exception as e:
+                print(f'[ERRO LOGO A4] {type(e).__name__}: {e}')
+                import traceback
+                traceback.print_exc()
 
         c.setFont("Helvetica-Bold", 16)
         c.drawString(55 * mm, y, emp_nome)
@@ -370,10 +374,7 @@ def gerar_pdf_factura(factura_id, formato="A4", caminho_saida=None,
         y -= 5 * mm
 
         # QR Code (debug)
-        print(f"[DEBUG-A4] qr_url = {qr_url[:60] if qr_url else 'VAZIO'}")
-        print(f"[DEBUG-A4] y = {y:.1f} pontos ({y/2.8346:.1f} mm)")
         resultado_qr = _desenhar_qr(c, qr_url, largura, y + 2 * mm, tamanho_mm=25, offset_direita_mm=50)
-        print(f"[DEBUG-A4] QR desenhado? {resultado_qr}")
 
         # Hash
         if hash_doc:
@@ -526,6 +527,8 @@ def gerar_pdf_proforma(proforma_id, formato="A4", caminho_saida=None):
     logo_path = None
     if emp and len(emp) > 9:
         logo_path = emp[9]
+        if logo_path and not os.path.isabs(logo_path):
+            logo_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), logo_path)
 
     try:
         itens = obter_itens_factura_com_desconto(proforma_id)
@@ -784,6 +787,8 @@ def gerar_pdf_devolucao(devolucao_id, formato="A4", caminho_saida=None):
     logo_path = None
     if emp and len(emp) > 9:
         logo_path = emp[9]
+        if logo_path and not os.path.isabs(logo_path):
+            logo_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), logo_path)
 
     pasta = "devolucoes"
     if not os.path.exists(pasta):
