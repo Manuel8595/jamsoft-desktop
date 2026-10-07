@@ -99,3 +99,8 @@ teste_*.pdf
 # ============================================================
 *.pdf
 !Maquete_Sistema_Farmacia_Angola.pdf
+# Pacotes de instalacao (nao versionados)
+JAM_Soft_v*.zip
+*_Setup.zip
+setup_temp/
+
