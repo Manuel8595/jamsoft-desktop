@@ -571,6 +571,30 @@ def executar_fecho_dia_completo(dia_id, data, utilizador_logado, parent, callbac
                     f"Clientes: {dados_finais['total_clientes']}\n\n"
                     f"Autorizado por: {nome_gerente}")
 
+                # ─── PERGUNTAR SOBRE DEPOSITO ───
+                try:
+                    dinheiro_caixa = dados_finais.get("total_dinheiro", 0) or 0
+                    if dinheiro_caixa > 0:
+                        resposta = messagebox.askyesno(
+                            "Fazer Deposito?",
+                            f"DINHEIRO EM CAIXA\n"
+                            f"{'='*40}\n\n"
+                            f"Total vendido: {formatar_kz(dados_finais['total_vendas'])}\n"
+                            f"Dinheiro fisico: {formatar_kz(dinheiro_caixa)}\n\n"
+                            f"Queres registar o deposito agora?\n\n"
+                            f"Sim  ->  Abre o formulario de deposito\n"
+                            f"Nao  ->  Podes faze-lo mais tarde\n"
+                            f"          (menu: DEPOSITOS BANCARIOS)"
+                        )
+                        if resposta:
+                            from depositos import dialogo_novo_deposito
+                            dialogo_novo_deposito(
+                                utilizador_logado, parent,
+                                callback=callback
+                            )
+                except Exception as e_dep:
+                    print(f"[FechoDia] Aviso ao abrir deposito: {e_dep}")
+
                 # Gerar Relatório Z
                 try:
                     from relatorio_z import abrir_escolha_impressao
