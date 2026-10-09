@@ -109,3 +109,8 @@ setup_temp/
 config_activacao.json
 config_activacao_backup*.json
 
+
+# Master Panel
+master_panel/**/__pycache__/
+master_panel/**/*.pyc
+
