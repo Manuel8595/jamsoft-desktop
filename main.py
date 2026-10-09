@@ -54,6 +54,21 @@ try:
     migrar_tabela_facturas()
 except Exception as e:
     print(f"[Migracao] Aviso: {e}")
+
+# ============================================================
+# ============ VERIFICAR ACTIVACAO ============================
+# ============================================================
+from config_activacao import existe_activacao
+
+if not existe_activacao():
+    print("[Activacao] Primeira execucao - a mostrar wizard...")
+    from activacao import mostrar_wizard_activacao
+    activado = mostrar_wizard_activacao()
+    if activado:
+        print("[Activacao] Activado com sucesso!")
+    else:
+        print("[Activacao] Continuando offline.")
+
 if not abrir_login():
     print("Login cancelado. A sair...")
     exit()

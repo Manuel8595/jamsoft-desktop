@@ -64,7 +64,11 @@ def copiar_logos():
         if f.is_file():
             shutil.copy2(f, PASTA_TEMP / "logos" / f.name)
             n += 1
-    print(f"[3/5] {n} logos copiados")
+    (PASTA_TEMP / "codigo" / "logos").mkdir(exist_ok=True)
+    for f in (PASTA_RAIZ / "logos").glob("*"):
+        if f.is_file():
+            shutil.copy2(f, PASTA_TEMP / "codigo" / "logos" / f.name)
+    print(f"[3/5] {n} logos copiados (raiz + codigo/logos/)")
     return n
 
 def copiar_docs():
@@ -82,18 +86,16 @@ def copiar_docs():
     return n
 
 def criar_bd_exemplo():
-    """Cria BD limpa com dados de exemplo."""
+    """Cria BD limpa com dados de exemplo + utilizador admin."""
     origem = PASTA_RAIZ / "farmacia.db"
-    destino = PASTA_TEMP / "exemplos" / "farmacia_exemplo.db"
+    destino = PASTA_TEMP / "codigo" / "farmacia_exemplo.db"
     
     if not origem.exists():
         print("[AVISO] farmacia.db nao existe - a saltar BD exemplo")
         return
     
-    # Copiar BD
     shutil.copy2(origem, destino)
     
-    # Abrir e limpar dados sensiveis
     conn = sqlite3.connect(destino)
     cur = conn.cursor()
     
@@ -111,7 +113,7 @@ def criar_bd_exemplo():
         ]
         for t in tabelas_limpar:
             try:
-                cur.execute(f"DELETE FROM {t}")
+                cur.execute("DELETE FROM " + t)
             except:
                 pass
         
@@ -122,7 +124,28 @@ def criar_bd_exemplo():
         except:
             pass
         
-        # Limpar clientes (deixar 1 exemplo)
+        # Manter APENAS um utilizador admin
+        try:
+            cur.execute("DELETE FROM utilizadores")
+        except:
+            pass
+        
+        # Criar admin com senha admin (hash SHA-256)
+        import hashlib
+        import secrets
+        salt = secrets.token_hex(16)
+        senha_hash = hashlib.sha256((salt + "admin").encode()).hexdigest()
+        
+        try:
+            cur.execute("""INSERT INTO utilizadores 
+                (nome, username, senha_hash, salt, perfil, ativo, criado_em)
+                VALUES (?, ?, ?, ?, ?, ?, datetime('now'))""",
+                ("Administrador", "admin", senha_hash, salt, "ADMINISTRADOR", 1))
+            print("[5/5] BD exemplo criada + admin/admin adicionado")
+        except Exception as e:
+            print("[AVISO] Nao foi possivel criar admin: " + str(e))
+        
+        # Limpar clientes
         try:
             cur.execute("DELETE FROM clientes")
             cur.execute("INSERT INTO clientes (nome, nif, telefone, email) VALUES (?, ?, ?, ?)",
@@ -131,11 +154,11 @@ def criar_bd_exemplo():
             pass
         
         conn.commit()
-        print("[5/5] BD exemplo criada (dados sensiveis removidos)")
     except Exception as e:
-        print(f"[AVISO] Erro a limpar BD: {e}")
+        print("[AVISO] Erro a limpar BD: " + str(e))
     finally:
         conn.close()
+
 
 def criar_readme():
     """Cria LEIA-ME personalizado."""

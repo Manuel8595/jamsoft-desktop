@@ -104,3 +104,8 @@ JAM_Soft_v*.zip
 *_Setup.zip
 setup_temp/
 
+
+# Activacao local (NUNCA versionar - tem credenciais)
+config_activacao.json
+config_activacao_backup*.json
+
