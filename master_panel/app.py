@@ -36,8 +36,9 @@ st.markdown("""
         border-right: 1px solid #334155;
     }
     .login-wrapper {
-        display: flex; justify-content: center; align-items: center;
-        min-height: 80vh; padding: 20px;
+        display: flex; justify-content: center; align-items: flex-start;
+        min-height: 70vh; padding: 40px 20px;
+        padding-top: 5vh;
     }
     .login-card {
         max-width: 420px; width: 100%; padding: 50px 40px;
@@ -52,7 +53,8 @@ st.markdown("""
         from { opacity: 0; transform: translateY(20px); }
         to { opacity: 1; transform: translateY(0); }
     }
-    .login-logo { text-align: center; margin-bottom: 20px; }
+    .login-logo { text-align: center; margin-bottom: 10px; }
+    .login-logo img { max-width: 160px; }
     .login-logo img {
         max-width: 200px; height: auto;
         filter: drop-shadow(0 0 30px rgba(124, 58, 237, 0.5));
