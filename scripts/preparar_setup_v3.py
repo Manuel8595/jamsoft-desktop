@@ -216,6 +216,13 @@ def copiar_logos():
 
 def copiar_docs():
     n = 0
+    # Copiar VERSION e VERSION_HISTORY para codigo/ tambem
+    for f_nome in ["VERSION", "VERSION_HISTORY.md"]:
+        f_orig = PASTA_RAIZ / f_nome
+        if f_orig.exists():
+            shutil.copy2(f_orig, PASTA_TEMP / "codigo" / f_nome)
+            n += 1
+    # VERSION_HISTORY_C?PIA
     docs = ["MANUAL_JAMSOFT.md", "RESUMO_SISTEMA.md",
             "VERSION_HISTORY.md", "DOCUMENTO_TECNICO_AGT.md",
             "VERSION", "requirements.txt"]
@@ -281,7 +288,7 @@ def criar_bd_exemplo():
             cur.execute("""INSERT INTO utilizadores 
                 (nome, username, senha_hash, salt, perfil, ativo, criado_em)
                 VALUES (?, ?, ?, ?, ?, ?, datetime('now'))""",
-                ("Administrador", "admin", senha_hash, "", "ADMINISTRADOR", 1))
+                ("Administrador", "admin", senha_hash, "", "admin", 1))
             print("   Admin criado (bcrypt)")
         except ImportError:
             print("   AVISO: bcrypt nao instalado - admin nao criado")
