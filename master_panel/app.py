@@ -36,12 +36,12 @@ st.markdown("""
         border-right: 1px solid #334155;
     }
     .login-wrapper {
-        display: flex; justify-content: center; align-items: flex-start;
-        min-height: 70vh; padding: 40px 20px;
-        padding-top: 5vh;
+        max-width: 460px;
+        margin: 0 auto;
+        padding: 20px;
     }
     .login-card {
-        max-width: 420px; width: 100%; padding: 50px 40px;
+        max-width: 420px; width: 100%; padding: 35px 35px;
         background: linear-gradient(145deg, rgba(30, 41, 59, 0.9), rgba(15, 23, 42, 0.95));
         border-radius: 24px;
         border: 1px solid rgba(124, 58, 237, 0.3);
@@ -119,7 +119,20 @@ st.markdown("""
         text-align: center; color: #64748b;
         font-size: 12px; margin-top: 25px;
     }
-</style>
+
+    /* Reduzir espaco em cima */
+    .block-container {
+        padding-top: 2rem !important;
+        padding-bottom: 1rem !important;
+        max-width: 100% !important;
+    }
+    [data-testid="stAppViewContainer"] > .main {
+        padding-top: 0 !important;
+    }
+    [data-testid="stVerticalBlock"] > [style*="flex-direction: column;"] > [data-testid="stVerticalBlock"] {
+        gap: 0.5rem !important;
+    }
+    </style>
 """, unsafe_allow_html=True)
 
 
