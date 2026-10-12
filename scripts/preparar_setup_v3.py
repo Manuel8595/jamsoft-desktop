@@ -98,18 +98,34 @@ if not exist "codigo\farmacia.db" (
     echo    Base de dados ja existe.
 )
 
-REM --- Passo 5: Arranque automatico ---
+REM --- Passo 5: Criar atalhos ---
 echo.
-echo [5/5] A configurar arranque automatico...
+echo [5/5] A criar atalhos...
+
+REM 5a. Atalho no arranque automatico
 set "STARTUP_FOLDER=%APPDATA%\Microsoft\Windows\Start Menu\Programs\Startup"
-set "ATALHO=%STARTUP_FOLDER%\JAMSoft.lnk"
+set "ATALHO_STARTUP=%STARTUP_FOLDER%\JAMSoft.lnk"
 set "SCRIPT_PATH=%~dp0INICIAR_FARMACIA.bat"
 set "WORK_DIR=%~dp0"
-powershell -Command "$ws = New-Object -ComObject WScript.Shell; $sc = $ws.CreateShortcut('%ATALHO%'); $sc.TargetPath = '%SCRIPT_PATH%'; $sc.WorkingDirectory = '%WORK_DIR%'; $sc.Description = 'JAM Soft'; $sc.Save()"
-if exist "%ATALHO%" (
-    echo    Atalho criado no arranque.
+
+powershell -Command "$ws = New-Object -ComObject WScript.Shell; $sc = $ws.CreateShortcut('%ATALHO_STARTUP%'); $sc.TargetPath = '%SCRIPT_PATH%'; $sc.WorkingDirectory = '%WORK_DIR%'; $sc.Description = 'JAM Soft'; $sc.Save()"
+
+if exist "%ATALHO_STARTUP%" (
+    echo    Atalho criado no arranque automatico.
 ) else (
     echo    AVISO: Criar atalho manualmente em shell:startup
+)
+
+REM 5b. Atalho no Ambiente de Trabalho (Desktop)
+set "DESKTOP=%USERPROFILE%\Desktop"
+set "ATALHO_DESKTOP=%DESKTOP%\JAM Soft.lnk"
+
+powershell -Command "$ws = New-Object -ComObject WScript.Shell; $sc = $ws.CreateShortcut('%ATALHO_DESKTOP%'); $sc.TargetPath = '%SCRIPT_PATH%'; $sc.WorkingDirectory = '%WORK_DIR%'; $sc.Description = 'JAM Soft - Sistema de Farmacia'; $sc.Save()"
+
+if exist "%ATALHO_DESKTOP%" (
+    echo    Atalho criado no Ambiente de Trabalho.
+) else (
+    echo    AVISO: Criar atalho manualmente no Desktop
 )
 
 echo.
