@@ -277,7 +277,7 @@ def copiar_docs():
     # VERSION_HISTORY_C?PIA
     docs = ["MANUAL_JAMSOFT.md", "RESUMO_SISTEMA.md",
             "VERSION_HISTORY.md", "DOCUMENTO_TECNICO_AGT.md",
-            "VERSION", "requirements.txt", "MANUAL_NOVA_FILIAL.md"]
+            "VERSION", "requirements.txt", "MANUAL_NOVA_FILIAL.md", "LICENSE"]
     for doc in docs:
         origem = PASTA_RAIZ / doc
         if origem.exists():
