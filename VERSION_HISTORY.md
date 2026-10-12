@@ -1,5 +1,38 @@
 # Histórico de Versões — JAM Soft Desktop
 
+## v1.0.5 — 12/10/2026
+
+### Adicionado
+- Setup profissional com 3 atalhos (Startup + Desktop + Menu Iniciar)
+- Ícone personalizado (logo JAM Soft 3D) nos atalhos
+- Detecção automática da pasta Desktop (compatível com OneDrive)
+- Manual completo para abrir nova filial (MANUAL_NOVA_FILIAL.md)
+- Kit de Instalação genérico (Kit_Instalacao_TriJAM)
+- Página "Farmácias" no Painel Master (agrupado por NIF)
+- Página "Histórico" no Painel Master (validações recentes)
+- 7 verificações no INSTALAR.bat (Python, internet, espaço, dependências)
+- INSTRUCOES_RAPIDAS.txt (guia de 5 minutos)
+- CHECKLIST.txt (para instalação em filial)
+
+### Alterado
+- DOCUMENTO_TECNICO_AGT.md actualizado para v1.0.4
+- Empresa preenchida: TRI JAM COMÉRCIO E PRESTAÇÃO DE SERVIÇO
+- NIF: 5003507920
+- Setup ZIP agora tem 8 docs (antes 5)
+
+### Corrigido
+- Bug: atalho Desktop falhava em PCs com OneDrive
+- Bug: caminho do Desktop fixo (agora dinâmico)
+- Bug: menu Iniciar não era criado (agora dinâmico)
+
+### Ficheiros novos
+- MANUAL_NOVA_FILIAL.md
+- master_panel/pages/4_Farmacias.py
+- master_panel/pages/5_Historico.py
+- Kit_Instalacao_TriJAM/ (kit completo)
+
+---
+
 ## v1.0.4 — 10/10/2026
 
 ### Adicionado
