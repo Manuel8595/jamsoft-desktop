@@ -141,7 +141,7 @@ if exist "%ATALHO_STARTUP%" (
 )
 
 REM 7b. Atalho no Ambiente de Trabalho (Desktop)
-set "DESKTOP=%USERPROFILE%\Desktop"
+for /f "usebackq tokens=*" %%i in (`powershell -NoProfile -Command "[Environment]::GetFolderPath('Desktop')"`) do set "DESKTOP=%%i"
 set "ATALHO_DESKTOP=%DESKTOP%\JAM Soft.lnk"
 
 powershell -Command "$ws = New-Object -ComObject WScript.Shell; $sc = $ws.CreateShortcut('%ATALHO_DESKTOP%'); $sc.TargetPath = '%SCRIPT_PATH%'; $sc.WorkingDirectory = '%WORK_DIR%'; $sc.Description = 'JAM Soft - Sistema de Farmacia'; if (Test-Path '%ICONE%') { $sc.IconLocation = '%ICONE%' }; $sc.Save()"
@@ -153,7 +153,7 @@ if exist "%ATALHO_DESKTOP%" (
 )
 
 REM 7c. Atalho no Menu Iniciar
-set "MENU_START=%APPDATA%\Microsoft\Windows\Start Menu\Programs"
+for /f "usebackq tokens=*" %%i in (`powershell -NoProfile -Command "[Environment]::GetFolderPath('Programs')"`) do set "MENU_START=%%i"
 set "ATALHO_MENU=%MENU_START%\JAM Soft.lnk"
 
 powershell -Command "$ws = New-Object -ComObject WScript.Shell; $sc = $ws.CreateShortcut('%ATALHO_MENU%'); $sc.TargetPath = '%SCRIPT_PATH%'; $sc.WorkingDirectory = '%WORK_DIR%'; $sc.Description = 'JAM Soft - Sistema de Farmacia'; if (Test-Path '%ICONE%') { $sc.IconLocation = '%ICONE%' }; $sc.Save()"
