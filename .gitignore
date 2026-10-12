@@ -114,3 +114,7 @@ config_activacao_backup*.json
 master_panel/**/__pycache__/
 master_panel/**/*.pyc
 
+
+# Kit de Instalacao (tem .env)
+Kit_Instalacao_*/
+
