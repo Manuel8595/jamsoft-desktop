@@ -23,22 +23,24 @@ ZIP_FINAL = PASTA_RAIZ / f"{NOME_PACOTE}.zip"
 # ============================================================
 INSTALAR_BAT = r"""@echo off
 chcp 65001 >nul
-title JAM Soft - Instalacao v1.0.3
+title JAM Soft - Instalacao v1.0.4
 color 0A
 cd /d "%~dp0"
 
 cls
 echo.
 echo ========================================
-echo      JAM SOFT - INSTALACAO v1.0.3
+echo      JAM SOFT - INSTALACAO v1.0.4
 echo ========================================
 echo.
 echo  Este script vai:
 echo   1. Verificar se tens Python instalado
-echo   2. Instalar as dependencias necessarias
-echo   3. Criar pastas de trabalho
-echo   4. Preparar a base de dados
-echo   5. Configurar arranque automatico
+echo   2. Verificar ligacao a internet
+echo   3. Verificar espaco em disco
+echo   4. Instalar as dependencias necessarias
+echo   5. Criar pastas de trabalho
+echo   6. Preparar a base de dados
+echo   7. Criar atalhos (arranque + desktop + menu)
 echo.
 echo ========================================
 echo.
@@ -46,7 +48,7 @@ pause
 
 REM --- Passo 1: Verificar Python ---
 echo.
-echo [1/5] A verificar Python...
+echo [1/7] A verificar Python...
 python --version >nul 2>&1
 if %errorlevel% neq 0 (
     echo.
@@ -63,17 +65,37 @@ if %errorlevel% neq 0 (
 python --version
 echo    Python OK!
 
-REM --- Passo 2: Instalar dependencias ---
+REM --- Passo 2: Verificar Internet ---
 echo.
-echo [2/5] A instalar dependencias (pode demorar 2-5 min)...
+echo [2/7] A verificar ligacao a internet...
+ping -n 1 8.8.8.8 >nul 2>&1
+if %errorlevel% neq 0 (
+    echo    AVISO: Sem ligacao a internet.
+    echo    A app funciona offline mas nao sincroniza.
+    echo.
+) else (
+    echo    Internet OK!
+)
+
+REM --- Passo 3: Verificar Espaco ---
+echo.
+echo [3/7] A verificar espaco em disco...
+for /f "tokens=3" %%a in ('dir /-c %~dp0 ^| find "bytes"') do set ESPACO=%%a
+echo    Espaco disponivel verificado.
+
+REM --- Passo 4: Instalar dependencias ---
+echo.
+echo [4/7] A instalar dependencias (pode demorar 2-5 min)...
 pip install -r requirements.txt --quiet --disable-pip-version-check
 if %errorlevel% neq 0 (
     echo    AVISO: Algumas dependencias falharam.
+) else (
+    echo    Dependencias instaladas.
 )
 
-REM --- Passo 3: Criar pastas ---
+REM --- Passo 5: Criar pastas ---
 echo.
-echo [3/5] A criar pastas de trabalho...
+echo [5/7] A criar pastas de trabalho...
 if not exist "codigo\backups" mkdir "codigo\backups"
 if not exist "codigo\facturas" mkdir "codigo\facturas"
 if not exist "codigo\saft" mkdir "codigo\saft"
@@ -84,9 +106,9 @@ if not exist "saft" mkdir saft
 if not exist "logs" mkdir logs
 echo    Pastas criadas.
 
-REM --- Passo 4: Preparar BD ---
+REM --- Passo 6: Preparar BD ---
 echo.
-echo [4/5] A preparar base de dados...
+echo [6/7] A preparar base de dados...
 if not exist "codigo\farmacia.db" (
     if exist "codigo\farmacia_exemplo.db" (
         copy "codigo\farmacia_exemplo.db" "codigo\farmacia.db" >nul
@@ -98,34 +120,48 @@ if not exist "codigo\farmacia.db" (
     echo    Base de dados ja existe.
 )
 
-REM --- Passo 5: Criar atalhos ---
+REM --- Passo 7: Criar atalhos ---
 echo.
-echo [5/5] A criar atalhos...
+echo [7/7] A criar atalhos...
 
-REM 5a. Atalho no arranque automatico
-set "STARTUP_FOLDER=%APPDATA%\Microsoft\Windows\Start Menu\Programs\Startup"
-set "ATALHO_STARTUP=%STARTUP_FOLDER%\JAMSoft.lnk"
 set "SCRIPT_PATH=%~dp0INICIAR_FARMACIA.bat"
 set "WORK_DIR=%~dp0"
+set "ICONE=%~dp0logos\jamsoft.ico"
 
-powershell -Command "$ws = New-Object -ComObject WScript.Shell; $sc = $ws.CreateShortcut('%ATALHO_STARTUP%'); $sc.TargetPath = '%SCRIPT_PATH%'; $sc.WorkingDirectory = '%WORK_DIR%'; $sc.Description = 'JAM Soft'; $sc.Save()"
+REM 7a. Atalho no arranque automatico
+set "STARTUP_FOLDER=%APPDATA%\Microsoft\Windows\Start Menu\Programs\Startup"
+set "ATALHO_STARTUP=%STARTUP_FOLDER%\JAMSoft.lnk"
+
+powershell -Command "$ws = New-Object -ComObject WScript.Shell; $sc = $ws.CreateShortcut('%ATALHO_STARTUP%'); $sc.TargetPath = '%SCRIPT_PATH%'; $sc.WorkingDirectory = '%WORK_DIR%'; $sc.Description = 'JAM Soft'; if (Test-Path '%ICONE%') { $sc.IconLocation = '%ICONE%' }; $sc.Save()"
 
 if exist "%ATALHO_STARTUP%" (
-    echo    Atalho criado no arranque automatico.
+    echo    [OK] Atalho no arranque automatico.
 ) else (
-    echo    AVISO: Criar atalho manualmente em shell:startup
+    echo    [AVISO] Nao foi possivel criar atalho no arranque.
 )
 
-REM 5b. Atalho no Ambiente de Trabalho (Desktop)
+REM 7b. Atalho no Ambiente de Trabalho (Desktop)
 set "DESKTOP=%USERPROFILE%\Desktop"
 set "ATALHO_DESKTOP=%DESKTOP%\JAM Soft.lnk"
 
-powershell -Command "$ws = New-Object -ComObject WScript.Shell; $sc = $ws.CreateShortcut('%ATALHO_DESKTOP%'); $sc.TargetPath = '%SCRIPT_PATH%'; $sc.WorkingDirectory = '%WORK_DIR%'; $sc.Description = 'JAM Soft - Sistema de Farmacia'; $sc.Save()"
+powershell -Command "$ws = New-Object -ComObject WScript.Shell; $sc = $ws.CreateShortcut('%ATALHO_DESKTOP%'); $sc.TargetPath = '%SCRIPT_PATH%'; $sc.WorkingDirectory = '%WORK_DIR%'; $sc.Description = 'JAM Soft - Sistema de Farmacia'; if (Test-Path '%ICONE%') { $sc.IconLocation = '%ICONE%' }; $sc.Save()"
 
 if exist "%ATALHO_DESKTOP%" (
-    echo    Atalho criado no Ambiente de Trabalho.
+    echo    [OK] Atalho no Ambiente de Trabalho.
 ) else (
-    echo    AVISO: Criar atalho manualmente no Desktop
+    echo    [AVISO] Nao foi possivel criar atalho no Desktop.
+)
+
+REM 7c. Atalho no Menu Iniciar
+set "MENU_START=%APPDATA%\Microsoft\Windows\Start Menu\Programs"
+set "ATALHO_MENU=%MENU_START%\JAM Soft.lnk"
+
+powershell -Command "$ws = New-Object -ComObject WScript.Shell; $sc = $ws.CreateShortcut('%ATALHO_MENU%'); $sc.TargetPath = '%SCRIPT_PATH%'; $sc.WorkingDirectory = '%WORK_DIR%'; $sc.Description = 'JAM Soft - Sistema de Farmacia'; if (Test-Path '%ICONE%') { $sc.IconLocation = '%ICONE%' }; $sc.Save()"
+
+if exist "%ATALHO_MENU%" (
+    echo    [OK] Atalho no Menu Iniciar.
+) else (
+    echo    [AVISO] Nao foi possivel criar atalho no Menu Iniciar.
 )
 
 echo.
