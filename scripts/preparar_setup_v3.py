@@ -12,7 +12,11 @@ import secrets
 from pathlib import Path
 from datetime import datetime
 
-VERSAO = "1.0.3"
+try:
+    with open("VERSION", encoding="utf-8") as _f:
+        VERSAO = _f.read().strip()
+except Exception:
+    VERSAO = "1.0.5"
 NOME_PACOTE = f"JAM_Soft_v{VERSAO}_Setup"
 PASTA_RAIZ = Path(".").resolve()
 PASTA_TEMP = PASTA_RAIZ / "setup_temp" / NOME_PACOTE
