@@ -10,7 +10,7 @@ import os
 import xml.etree.ElementTree as ET
 from xml.dom import minidom
 from datetime import datetime
-from database import conectar, obter_empresa
+from database import conectar, obter_empresa, gerar_hash_factura
 
 
 PASTA_SAFT = "saft"
@@ -207,7 +207,24 @@ def exportar_saft(data_inicio=None, data_fim=None, caminho_saida=None):
             _criar_elemento(status, "SourceID", user_nome or "Sistema")
             _criar_elemento(status, "SourceBilling", "P")
 
-            _criar_elemento(inv, "Hash", hash_doc or "0" * 172)
+            # Se o hash não existir, recalcular (em vez de escrever zeros)
+            if not hash_doc:
+                try:
+                    emp = obter_empresa()
+                    nif_emp = emp[2] if emp else "-"
+                    hash_doc = gerar_hash_factura(
+                        numero, "FT 2026/", data_f, nif_emp, total, cli_nif or ""
+                    )
+                    print(f"  [SAF-T] Hash recalculado para factura {numero}")
+                except Exception as e:
+                    print(f"  [SAF-T] AVISO: Factura {numero} sem hash: {e}")
+                    hash_doc = ""
+            
+            if not hash_doc:
+                print(f"  [SAF-T] ERRO: Factura {numero} continua sem hash - a saltar")
+                continue
+            
+            _criar_elemento(inv, "Hash", hash_doc)
             _criar_elemento(inv, "HashControl", "1")
 
             _criar_elemento(inv, "Period", str(datetime.now().month))

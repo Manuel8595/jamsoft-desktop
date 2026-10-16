@@ -2068,13 +2068,13 @@ def proximo_numero_factura():
         return None, None
     
     emp_id, serie, prox = resultado
-    numero_completo = f"{serie}{prox:05d}"
+    numero_simples = f"{prox:05d}"
     
     cursor.execute("UPDATE empresa SET proximo_numero = proximo_numero + 1 WHERE id = ?", (emp_id,))
     conn.commit()
     conn.close()
     
-    return serie, numero_completo
+    return serie, numero_simples
 
 
 def criar_factura(serie, numero, tipo, venda_id, cliente_id, cliente_nome,
@@ -2107,6 +2107,24 @@ def criar_factura(serie, numero, tipo, venda_id, cliente_id, cliente_nome,
           u, term, farm))
     factura_id = cursor.lastrowid
     conn.commit()
+
+    # ============================================================
+    # NOVO: Gerar hash AGT + QR code
+    # ============================================================
+    try:
+        emp = obter_empresa()
+        nif_emp = emp[2] if emp else "-"
+        h = gerar_hash_factura(numero, serie, data, nif_emp, total, cliente_nif or "")
+        qr = gerar_qr_code_factura(numero, serie, h)
+        cursor.execute("""
+            UPDATE facturas 
+            SET hash_documento = ?, qr_code = ?
+            WHERE id = ?
+        """, (h, qr, factura_id))
+        conn.commit()
+    except Exception as e:
+        print(f"[Hash] Aviso ao gerar hash: {e}")
+
     conn.close()
     return factura_id
 
@@ -2239,13 +2257,13 @@ def proximo_numero_proforma():
             return None, None
         
         emp_id, serie, prox = r
-        numero_completo = f"{serie}{prox:05d}"
+        numero_simples = f"P{prox:05d}"
         
         cur.execute("UPDATE empresa SET proximo_numero_proforma = proximo_numero_proforma + 1 WHERE id = ?", (emp_id,))
         conn.commit()
         conn.close()
         
-        return serie, numero_completo
+        return serie, numero_simples
     except Exception as e:
         print(f"[Proforma] Erro: {e}")
         conn.close()
